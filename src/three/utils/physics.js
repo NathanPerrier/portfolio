@@ -18,7 +18,7 @@ export function initPhysics() {
 }
 
 export function createPlayerPhysics(world) {
-    const playerShape = new CANNON.Cylinder(0.5, 0.5, 8, 16); // Increased height to 8
+    const playerShape = new CANNON.Sphere(0.5);
     const playerBody = new CANNON.Body({
         mass: 5,
         position: new CANNON.Vec3(7.5, 5, 7.5), // Adjusted position for new height
@@ -34,39 +34,66 @@ export function createPlayerPhysics(world) {
 export function createObjectPhysics(mesh, world) {
     if (mesh.name.includes('Floor')) return;
 
-    // Ensure the geometry has a bounding box.
+    if (mesh.geometry && mesh.geometry.attributes.position && mesh.geometry.index) {
+        const geometry = mesh.geometry;
+        const vertices = [...geometry.attributes.position.array];
+        const indices = geometry.index.array;
+
+        const worldScale = new THREE.Vector3();
+        mesh.getWorldScale(worldScale);
+
+        if (worldScale.x !== 1 || worldScale.y !== 1 || worldScale.z !== 1) {
+            for (let i = 0; i < vertices.length; i += 3) {
+                vertices[i] *= worldScale.x;
+                vertices[i + 1] *= worldScale.y;
+                vertices[i + 2] *= worldScale.z;
+            }
+        }
+
+        const shape = new CANNON.Trimesh(vertices, indices);
+
+        const worldPosition = new THREE.Vector3();
+        mesh.getWorldPosition(worldPosition);
+        const worldQuaternion = new THREE.Quaternion();
+        mesh.getWorldQuaternion(worldQuaternion);
+
+        const body = new CANNON.Body({
+            mass: 0, // Static
+            shape: shape,
+            position: new CANNON.Vec3().copy(worldPosition),
+            quaternion: new CANNON.Quaternion().copy(worldQuaternion),
+        });
+
+        world.addBody(body);
+        return body;
+    }
+
+    // Fallback to original Box logic
     if (!mesh.geometry.boundingBox) {
         mesh.geometry.computeBoundingBox();
     }
 
-    // Get the size of the geometry's bounding box.
     const size = new THREE.Vector3();
     mesh.geometry.boundingBox.getSize(size);
 
-    // Apply the mesh's scale to the size.
     const worldScale = new THREE.Vector3();
     mesh.getWorldScale(worldScale);
     size.multiply(worldScale);
 
-    // Create the Cannon.js shape with the correct size.
     const halfExtents = new CANNON.Vec3(size.x / 2, size.y / 2, size.z / 2);
     const shape = new CANNON.Box(halfExtents);
 
-    // Get the world position and quaternion of the mesh.
     const worldPosition = new THREE.Vector3();
     mesh.getWorldPosition(worldPosition);
     const worldQuaternion = new THREE.Quaternion();
     mesh.getWorldQuaternion(worldQuaternion);
 
-    // Calculate the offset of the geometry's center from the mesh's origin (pivot point).
     const centerOffset = new THREE.Vector3();
     mesh.geometry.boundingBox.getCenter(centerOffset);
 
-    // Apply the mesh's scale and rotation to the offset.
     centerOffset.multiply(worldScale);
     centerOffset.applyQuaternion(worldQuaternion);
 
-    // Add the transformed offset to the mesh's world position to get the body's final position.
     worldPosition.add(centerOffset);
 
     const body = new CANNON.Body({

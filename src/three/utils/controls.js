@@ -1,7 +1,17 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
+import { device } from '../../utils/device.js';
+import { ScrollControls } from './ScrollControls.js';
 
-export function createControls(camera, renderer, playerBody) {
+export function createControls(camera, renderer, playerBody, interactiveObjects) {
+    if (device.isTouchOnly) {
+        const controls = new ScrollControls(camera, interactiveObjects, renderer.domElement);
+        function update() {
+            controls.update();
+        }
+        return { controls, update };
+    }
+
     const controls = new PointerLockControls(camera, renderer.domElement);
     controls.pointerSpeed = 1.5;
 
@@ -61,7 +71,7 @@ export function createControls(camera, renderer, playerBody) {
     });
 
     function update() {
-        const speed = 60;
+        const speed = 20;
 
         euler.setFromQuaternion(camera.quaternion);
         const moveDirection = new THREE.Vector3(inputVelocity.x, 0, inputVelocity.z);
@@ -71,7 +81,7 @@ export function createControls(camera, renderer, playerBody) {
         playerBody.velocity.z = moveDirection.z * speed;
 
         camera.position.copy(playerBody.position);
-        camera.position.y += 3; // Adjust this value to set the camera height
+        camera.position.y += 6; // Adjust this value to set the camera height
     }
 
     return { controls, update };

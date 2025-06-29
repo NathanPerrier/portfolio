@@ -1,4 +1,8 @@
 import './style.css'
 import { initScene } from './three/scene.js';
 
-initScene();
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    initScene();
+  }, 2000);
+});

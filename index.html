@@ -2,15 +2,28 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <link rel="icon" type="image/png" href="/assets/icons/icon-iOS-TintedDark-1024x1024@2x.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preload" as="image" href="/assets/images/frame.png">
     <title>Nathan Perrier</title>
   </head>
   <body>
+    <div id="loading-screen">
+      <div id="loading-text"></div>
+    </div>
     <div id="crosshair"></div>
     <img id="frame" src="/assets/images/frame.png" alt="frame" />
     <canvas id="bg"></canvas>
     <div id="app"></div>
+
     <script type="module" src="/src/main.js"></script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-4NFRXM7RJB"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+
+      gtag('config', 'G-4NFRXM7RJB');
+    </script>
   </body>
 </html>

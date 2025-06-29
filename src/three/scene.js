@@ -9,29 +9,38 @@ import { createControls } from './utils/controls.js';
 import { initPhysics, createPlayerPhysics, createObjectPhysics, createDebugger } from './utils/physics.js';
 import { createInteractionHandler } from './utils/interactive.js';
 import { createOutline } from './utils/outline.js';
+import { createLoadingManager } from './utils/loading.js';
 import { DistortionShader } from './utils/distortionShader.js';
 import { ScanlineShader } from './utils/scanlineShader.js';
 
 export function initScene() {
+    const loadingScreen = document.getElementById('loading-screen');
+    const loadingText = document.getElementById('loading-text');
+    const { loadingManager, updateLoadingText } = createLoadingManager(loadingText);
+
+    updateLoadingText('Initializing scene...');
+
     const scene = new THREE.Scene();
+    updateLoadingText('Scene created.');
+
     const world = initPhysics();
+    updateLoadingText('Physics world created.');
+
     const cannonDebugger = createDebugger(scene, world);
+    updateLoadingText('Physics debugger created.');
 
     addLights(scene);
-
-    //! DEBUG
-    // const gridHelper = new THREE.GridHelper(100, 50, 0x0000ff, 0x808080);
-    // gridHelper.position.y = -0.01;
-    // gridHelper.receiveShadow = true;
-    // scene.add(gridHelper);
+    updateLoadingText('Lights added.');
 
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.lookAt(-15, 0, 0);
+    updateLoadingText('Camera created.');
 
     const renderer = new THREE.WebGLRenderer({
       canvas: document.querySelector('#bg'),
       antialias: true
     });
+    updateLoadingText('Renderer created.');
 
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -43,9 +52,20 @@ export function initScene() {
 
     renderer.setSize(window.innerWidth, window.innerHeight);
 
-    const loader = new GLTFLoader();
+    const loader = new GLTFLoader(loadingManager);
+    updateLoadingText('Asset loader created.');
+
     const playerBody = createPlayerPhysics(world);
+    updateLoadingText('Player physics body created.');
+
     const interactiveObjects = [];
+
+    loadingManager.onLoad = () => {
+        updateLoadingText('All assets loaded.');
+        setTimeout(() => {
+            loadingScreen.style.display = 'none';
+        }, 1500);
+    };
 
     loader.load('/assets/3d/room/room.glb', function (gltf) {
       const model = gltf.scene;
@@ -53,15 +73,10 @@ export function initScene() {
         if (node.isMesh) {
             node.castShadow = true;
             node.receiveShadow = true;
-
-            if (node.material.emissiveIntensity > 5) {
-                console.log(node.material.emissive, node.material.emissiveIntensity);
-            }
             
             createObjectPhysics(node, world);
         
             if (node.name.includes('_interactive')) {
-                console.log('Interactive object found:', node.name.split('_interactive')[0]);
                 interactiveObjects.push(node);
                 
                 createOutline(node);
@@ -75,11 +90,12 @@ export function initScene() {
         }
       });
       scene.add(model);
+      updateLoadingText('Room loaded.');
     }, undefined, function (error) {
       console.error(error);
     });
 
-    const { controls, update: updateControls } = createControls(camera, renderer, playerBody);
+    const { controls, update: updateControls } = createControls(camera, renderer, playerBody, interactiveObjects);
     const clock = new THREE.Clock();
 
     const composer = new EffectComposer(renderer);
