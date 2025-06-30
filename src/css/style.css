@@ -2,21 +2,6 @@ body {
   cursor: none;
 }
 
-.custom-cursor {
-    position: fixed;
-    width: 30px;
-    height: 30px;
-    background-image: url('/assets/cursor/cursor.png');
-    background-size: contain;
-    pointer-events: none;
-    z-index: 100;
-    transform: translate(-50%, -50%);
-}
-
-.custom-cursor.clicking {
-    background-image: url('/assets/cursor/cursor-click.png');
-}
-
 #frame {
   position: fixed;
   top: 0;

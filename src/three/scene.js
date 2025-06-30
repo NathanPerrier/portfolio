@@ -13,7 +13,6 @@ import { createLoadingManager } from './utils/loading.js';
 import { DistortionShader } from './utils/distortionShader.js';
 import { ScanlineShader } from './utils/scanlineShader.js';
 import { device } from '../utils/device.js';
-import { objectProperties } from './utils/sceneConfig.js';
 
 export function initScene() {
     const loadingScreen = document.getElementById('loading-screen');
@@ -89,12 +88,6 @@ export function initScene() {
                 interactiveObjects.push(node);
                 
                 createOutline(node);
-
-                const properties = objectProperties[node.name];
-                if (properties) {
-                    node.userData.zoomPosition = properties.zoomPosition;
-                    node.userData.lookAtPosition = properties.lookAtPosition;
-                }
             }
         }
         if (node.isLight) {
@@ -155,6 +148,9 @@ export function initScene() {
 
         //* DEBUG FUNCTIONALITY
         // cannonDebugger.update();
+
+        // console.log('Camera position:', camera.position);
+        // console.log('Camera lookAt:', camera.getWorldDirection(new THREE.Vector3()));
 
         interactionHandler.update();
 

@@ -1,11 +1,16 @@
 import * as THREE from 'three';
 import gsap from 'gsap';
 
+import { objectProperties } from './objectProperties.js';
+import { cleanString } from '../../utils/string.js';
+
 export function createInteractionHandler(camera, interactiveObjects, controls) {
     const raycaster = new THREE.Raycaster();
     let lastIntersected = null;
     let isZoomed = false;
+    let isAnimating = false;
     let zoomedObject = null;
+    let actionJustPerformed = false;
 
     const originalCameraState = {
         position: new THREE.Vector3(),
@@ -13,7 +18,12 @@ export function createInteractionHandler(camera, interactiveObjects, controls) {
     };
 
     function update() {
-        if (isZoomed) return;
+        if (isZoomed || isAnimating) return;
+
+        if (actionJustPerformed) {
+            actionJustPerformed = false;
+            return;
+        }
 
         raycaster.setFromCamera({ x: 0, y: 0 }, camera);
         const intersects = raycaster.intersectObjects(interactiveObjects, true);
@@ -36,25 +46,56 @@ export function createInteractionHandler(camera, interactiveObjects, controls) {
     function zoomTo(object) {
         isZoomed = true;
         zoomedObject = object;
+        const properties = objectProperties[cleanString(object.name)];
+
+        if (properties && properties.action) {
+            properties.action();
+        }
+
         if (controls.isLocked) {
             controls.unlock();
         }
+
         controls.enabled = false;
 
         originalCameraState.position.copy(camera.position);
         originalCameraState.quaternion.copy(camera.quaternion);
 
-        const zoomPosition = object.userData.zoomPosition || new THREE.Vector3(0, 0, 5);
-        const lookAtPosition = object.userData.lookAtPosition || new THREE.Vector3(0, 0, 0);
+        const zoomPosition = properties.zoomPosition || new THREE.Vector3(0, 0, 5);
+        const lookAtPosition = properties.lookAtPosition;
 
+        console.log('Zooming to:', object.name, 'at position:', zoomPosition);
         gsap.to(camera.position, {
             duration: 1.5,
             x: zoomPosition.x,
             y: zoomPosition.y,
             z: zoomPosition.z,
             ease: 'power3.inOut',
-            onUpdate: () => camera.lookAt(lookAtPosition)
+            onStart: () => {
+                gsap.ticker.add(updateCamera);
+            },
+            onUpdate: () => {
+                if (lookAtPosition) {
+                    camera.lookAt(lookAtPosition);
+                } else {
+                    const center = new THREE.Box3().setFromObject(object).getCenter(new THREE.Vector3());
+                    camera.lookAt(center);
+                }
+            },
+            onComplete: () => {
+                gsap.ticker.remove(updateCamera);
+                controls.enabled = true;
+                isZoomed = true;
+                if (zoomedObject.userData.outline) {
+                    zoomedObject.userData.outline.visible = true;
+                }
+            }
         });
+
+        function updateCamera() {
+            camera.updateProjectionMatrix();
+        }
+
     }
 
     function zoomOut() {
