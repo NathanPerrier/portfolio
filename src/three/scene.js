@@ -12,6 +12,8 @@ import { createOutline } from './utils/outline.js';
 import { createLoadingManager } from './utils/loading.js';
 import { DistortionShader } from './utils/distortionShader.js';
 import { ScanlineShader } from './utils/scanlineShader.js';
+import { device } from '../utils/device.js';
+import { objectProperties } from './utils/sceneConfig.js';
 
 export function initScene() {
     const loadingScreen = document.getElementById('loading-screen');
@@ -74,12 +76,25 @@ export function initScene() {
             node.castShadow = true;
             node.receiveShadow = true;
             
+            if (node.material && node.material.map) {
+                node.material.map.minFilter = THREE.LinearMipmapLinearFilter;
+                node.material.map.generateMipmaps = true;
+                node.material.map.anisotropy = renderer.capabilities.getMaxAnisotropy();
+                node.material.map.needsUpdate = true;
+            }
+
             createObjectPhysics(node, world);
         
             if (node.name.includes('_interactive')) {
                 interactiveObjects.push(node);
                 
                 createOutline(node);
+
+                const properties = objectProperties[node.name];
+                if (properties) {
+                    node.userData.zoomPosition = properties.zoomPosition;
+                    node.userData.lookAtPosition = properties.lookAtPosition;
+                }
             }
         }
         if (node.isLight) {
@@ -90,6 +105,7 @@ export function initScene() {
         }
       });
       scene.add(model);
+      renderer.compile(scene, camera);
       updateLoadingText('Room loaded.');
     }, undefined, function (error) {
       console.error(error);
@@ -112,7 +128,13 @@ export function initScene() {
     scanlinePass.renderToScreen = true;
     composer.addPass(scanlinePass);
 
-    const interactionHandler = createInteractionHandler(camera, interactiveObjects);
+    const interactionHandler = createInteractionHandler(camera, interactiveObjects, controls);
+
+    window.addEventListener('click', () => {
+        if (!device.isTouchOnly) {
+            interactionHandler.onClick();
+        }
+    });
 
     window.addEventListener('resize', onWindowResize, false);
     function onWindowResize() {

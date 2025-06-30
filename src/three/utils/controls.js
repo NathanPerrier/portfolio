@@ -15,6 +15,16 @@ export function createControls(camera, renderer, playerBody, interactiveObjects)
     const controls = new PointerLockControls(camera, renderer.domElement);
     controls.pointerSpeed = 1.5;
 
+    const cursor = document.querySelector('.custom-cursor');
+
+    controls.addEventListener('lock', () => {
+        cursor.style.display = 'none';
+    });
+
+    controls.addEventListener('unlock', () => {
+        cursor.style.display = 'block';
+    });
+
     renderer.domElement.addEventListener('click', () => {
         controls.lock();
     });
