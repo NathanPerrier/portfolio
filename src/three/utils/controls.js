@@ -20,12 +20,12 @@ export function createControls(camera, renderer, playerBody, interactiveObjects)
 
     controls.addEventListener('lock', () => {
         cursor.style.display = 'none';
-        uiContainer.style.display = 'none';
+        uiContainer.style.opacity = '0';
     });
 
     controls.addEventListener('unlock', () => {
         cursor.style.display = 'block';
-        uiContainer.style.display = 'block';
+        uiContainer.style.opacity = '1';
     });
 
     renderer.domElement.addEventListener('click', () => {

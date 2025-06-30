@@ -4,16 +4,19 @@ body {
 
 #hud-ui, #timeout-ui, #ui-container {
   position: absolute;
-  display: none;;
   width: 100vw;
   height: 100vh;
   z-index: 11;
   pointer-events: none;
+  opacity: 0;
 }
 
 #hud-ui, #timeout-ui {
+  display: none;
+  opacity: 1;
   background-color: rgba(0, 0, 0, 0.5);
 }
+
 
 #hud-padding, #timeout-padding {
   height: 100%;

@@ -29,9 +29,10 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             await initScene();
 
-            uiContainer.style.display = 'block';
+            uiContainer.style.opacity = '1';
+            uiContainer.style.transition = 'opacity 0.3s ease-in-out';
             initNesUI();
-            
+
             clearTimeout(timeout);
         } catch (error) {
             console.error('Failed to initialize scene:', error);
