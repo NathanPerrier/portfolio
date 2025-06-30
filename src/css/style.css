@@ -2,6 +2,28 @@ body {
   cursor: none;
 }
 
+#hud-ui {
+  position: absolute;
+  width: 80%;
+  height: 80%;
+  top: 10%;
+  z-index: 1;
+  left: 10%;
+}
+
+#hud-dialog {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  /* vertivally align */
+
+}
+
+.hidden {
+  display: none;
+}
+
+
 #frame {
   position: fixed;
   top: 0;
