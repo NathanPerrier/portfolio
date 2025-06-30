@@ -17,6 +17,6 @@ p {
   font-size: 0.9em;
 }
 
-button, .nes-btn {
+button, .nes-btn, a {
     cursor: none;
 }

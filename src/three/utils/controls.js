@@ -16,13 +16,16 @@ export function createControls(camera, renderer, playerBody, interactiveObjects)
     controls.pointerSpeed = 1.5;
 
     const cursor = document.querySelector('.custom-cursor');
+    const uiContainer = document.getElementById('ui-container');
 
     controls.addEventListener('lock', () => {
         cursor.style.display = 'none';
+        uiContainer.style.display = 'none';
     });
 
     controls.addEventListener('unlock', () => {
         cursor.style.display = 'block';
+        uiContainer.style.display = 'block';
     });
 
     renderer.domElement.addEventListener('click', () => {

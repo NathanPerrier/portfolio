@@ -14,7 +14,7 @@ const fragmentShader = `
 `;
 
 export class DistortionEffect extends Effect {
-    constructor({ strength = 0.15 } = {}) {
+    constructor({ strength = 0.175 } = {}) {
         super('DistortionEffect', fragmentShader, {
             uniforms: new Map([
                 ['strength', new Uniform(strength)]

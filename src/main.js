@@ -5,7 +5,7 @@ import './css/cursor.css';
 
 import { initScene } from './three/scene.js';
 import { initCursor, frameImage } from './utils/cursor.js';
-import { initNesUI } from './ui/welcome.js';
+import { initNesUI } from './utils/welcomeDialog.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -16,22 +16,27 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     setTimeout(async () => {
-        const timeoutDialog = document.getElementById('timeout-dialog');
+        const timeoutDialog = document.getElementById('timeout-ui');
+        const uiContainer = document.getElementById('ui-container');
+
         const timeoutDuration = 10000; // 10 seconds
 
         const timeout = setTimeout(() => {
             
-            timeoutDialog.showModal();
+            timeoutDialog.style.display = 'flex';
         }, timeoutDuration);
-
+        
         try {
             await initScene();
+
+            uiContainer.style.display = 'block';
             initNesUI();
+            
             clearTimeout(timeout);
         } catch (error) {
             console.error('Failed to initialize scene:', error);
             clearTimeout(timeout);
-            timeoutDialog.showModal();
+            timeoutDialog.style.display = 'flex';
         }
     }, 1500);
 });

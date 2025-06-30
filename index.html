@@ -18,39 +18,56 @@
     <div id="crosshair"></div>
     <img id="frame" src="/assets/images/frame.png" alt="frame" />
     <canvas id="bg"></canvas>
+    <div id="css-renderer">
+          
+    </div>
+    <div id="ui-container">
+      <div id="ui-padding">
+        <div class="nes-container transparent-container" id="transparent-container">
+          <p>This is a transparent container.</p>
+        </div>
+    </div>
 
     <div id="hud-ui">
-      <dialog class="nes-dialog is-dark is-rounded" id="hud-dialog">
-        <form method="dialog">
-          <div class="dialog-page" id="dialog-page-1">
-            <h1 class="title">Welcome!</h1>
-            <p>Use WASD to move and mouse to look around. To begin control, simply press on the screen and to exit just press escape.</p>
-          </div>
-          <div class="dialog-page hidden" id="dialog-page-2">
-            <h1 class="title">Controls</h1>
-            <p>Use WASD to move and mouse to look around. To begin control, simply press on the screen and to exit just press escape.</p>
-          </div>
-          <div class="dialog-page hidden" id="dialog-page-3">
-            <h1 class="title">Interactions</h1>
-            <p>Some objects in the room are interactable. These are indicated by the white outline when your crosshair is on it. Simply click on the object when the white outline is present to interact with the object.</p>
-          </div>
-          <menu class="dialog-menu">
-            <button type="button" class="nes-btn" id="dialog-prev-btn">Prev</button>
-            <button type="button" class="nes-btn" id="dialog-next-btn">Next</button>
-            <button type="submit" class="nes-btn is-primary" id="dialog-close-btn">Close</button>
-          </menu>
-        </form>
-      </dialog>
+      <div id="hud-padding">
+        <dialog class="nes-dialog is-dark is-rounded" id="hud-dialog">
+          <form method="dialog">
+            <div class="dialog-page" id="dialog-page-1">
+              <h1 class="title">Welcome!</h1>
+              <p>Thank you for checking out my project, I hope you enjoy exploring it! Feel free to check out the source code on my <a href="https://github.com/nathanperrier" target="_blank">Github page</a>!</p>
+            </div>
+            <div class="dialog-page hidden" id="dialog-page-2">
+              <h1 class="title">Controls</h1>
+              <p>Use WASD to move and mouse to look around. To begin control, simply press on the screen and to exit just press escape.</p>
+            </div>
+            <div class="dialog-page hidden" id="dialog-page-3">
+              <h1 class="title">Interactions</h1>
+              <p>Some objects in the room are interactable. These are indicated by the white outline when your crosshair is on it. Simply click on the object when the white outline is present to interact with the object.</p>
+            </div>
+            <menu class="dialog-menu">
+              <button type="button" class="nes-btn" id="dialog-next-btn">Next</button>
+              <button type="button" class="nes-btn" id="dialog-prev-btn">Prev</button>
+              <div id="close">
+                <button type="submit" class="nes-btn is-primary" id="dialog-close-btn">Close</button>
+              </div>
+            </menu>
+          </form>
+        </dialog>
+      </div>
     </div>
     
-    <dialog class="nes-dialog is-dark is-rounded" id="timeout-dialog">
-      <form method="dialog">
-          <h1 class="title">Error Loading Scene</h1>
-          <p>The scene is taking a long time to load. Please try refreshing.</p>
-  
-          <button type="button" class="nes-btn is-primary" onclick="location.reload()">Refresh</button>
-      </form>
-    </dialog>
+    <div id="timeout-ui">
+      <div id="timeout-padding">
+        <dialog class="nes-dialog is-dark is-rounded" id="timeout-dialog">
+          <form method="dialog">
+              <h1 class="title">Error Loading Scene</h1>
+              <p>The scene is taking a long time to load. Please try refreshing.</p>
+      
+              <button type="button" class="nes-btn is-primary" onclick="location.reload()">Refresh</button>
+          </form>
+        </dialog>
+      </div>
+    </div>
 
     <div class="custom-cursor"></div>
 

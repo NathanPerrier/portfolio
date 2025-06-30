@@ -5,7 +5,7 @@
     background-image: url('/assets/cursor/cursor.png');
     background-size: contain;
     pointer-events: none;
-    z-index: 100;
+    z-index: 200;
     transform: translate(-50%, -50%);
 }
 

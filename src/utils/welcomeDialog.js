@@ -8,20 +8,26 @@ export function initNesUI() {
     const totalPages = dialogPages.length;
     let currentPage = 1;
 
+    if (sessionStorage.getItem('welcomeDialogSeen')) {
+        hudUI.style.display = 'none';
+        return;
+    }
+
+    hudUI.style.display = 'block';
+
     function showPage(pageNumber) {
         dialogPages.forEach(page => {
             page.classList.add('hidden');
         });
 
         const page = document.getElementById(`dialog-page-${pageNumber}`);
-        console.log('Showing page:', pageNumber, page ? page.classList : 'Page not found');
         if (page) {
             page.classList.remove('hidden');
         }
+        updateDialogButtons();
     }
 
     function updateDialogButtons() {
-        console.log('Updating buttons for page:', currentPage);
         if (prevButton) {
             prevButton.style.display = (currentPage > 1) ? 'inline-block' : 'none';
         }
@@ -31,7 +37,6 @@ export function initNesUI() {
     }
 
     function switchDialogPage(direction) {
-        console.log('Switching page:', direction);
         if (direction === 'next') {
             if (currentPage < totalPages) {
                 currentPage++;
@@ -42,20 +47,19 @@ export function initNesUI() {
             }
         }
         showPage(currentPage);
-        updateDialogButtons();
     }
 
     function showDialog() {
-        currentPage = 1;
-        showPage(currentPage);
-        updateDialogButtons();
-        hudDialog.showModal();
+        hudUI.style.display = 'block';
     }
 
     function closeDialog() {
         hudUI.style.display = 'none';
         hudDialog.close();
+        sessionStorage.setItem('welcomeDialogSeen', 'true');
     }
+
+    updateDialogButtons();
 
     prevButton.addEventListener('click', () => switchDialogPage('prev'));
     nextButton.addEventListener('click', () => switchDialogPage('next'));
