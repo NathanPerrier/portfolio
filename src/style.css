@@ -58,9 +58,21 @@ canvas {
   display: flex;
   justify-content: center;
   align-items: center;
-  color: white;
+  color: #3f3;
   font-family: 'Courier New', Courier, monospace;
   overflow: hidden;
+}
+
+#loading-screen::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, transparent 60%, black 115%);
+  z-index: 101;
+  pointer-events: none;
 }
 
 #loading-screen::after {
@@ -94,7 +106,11 @@ canvas {
   width: 80%;
   height: 70%;
   overflow-y: hidden;
+  overflow-x: hidden;
   animation: text-flicker 0.01s infinite alternate;
+  text-shadow: 0 0 3px #3f3, 0 0 5px #3f3;
+  position: relative;
+  z-index: 103;
 }
 
 @keyframes text-flicker {

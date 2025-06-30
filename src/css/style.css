@@ -1,0 +1,91 @@
+#frame {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  pointer-events: none;
+  z-index: 101;
+}
+
+canvas {
+  position: fixed;
+  width: 100vw;
+  height: 100vh;
+  top: 0;
+  left: 0;
+}
+
+
+#crosshair {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  border: 2px solid white;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 10;
+}
+
+#loading-screen {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  padding: 0rem 4rem 0rem 0rem;
+  height: 100vh;
+  background: #000;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: white;
+  overflow: hidden;
+}
+
+#loading-screen::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 200%;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 255, 255, 0.05),
+    rgba(255, 255, 255, 0.1) 1.5px,
+    rgba(255, 255, 255, 0.05) 3px
+  );
+  animation: scan 7s linear infinite;
+  pointer-events: none;
+  z-index: 102;
+}
+
+@keyframes scan {
+  from { transform: translateY(-50%); }
+  to { transform: translateY(0); }
+}
+
+#loading-text {
+  white-space: pre-wrap;
+  font-size: .9em;
+  text-align: left;
+  padding: 0;
+  width: 80%;
+  height: 70%;
+  overflow-y: hidden;
+  overflow-x: hidden;
+  animation: text-flicker 0.01s infinite alternate;
+}
+
+@keyframes text-flicker {
+  from {
+    opacity: 0.8;
+  }
+  to {
+    opacity: 1;
+  }
+}

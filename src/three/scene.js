@@ -130,6 +130,8 @@ export function initScene() {
         world.step(1 / 60, delta, 3);
         updateControls(delta);
         
+
+        //* DEBUG FUNCTIONALITY
         // cannonDebugger.update();
 
         interactionHandler.update();

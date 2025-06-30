@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preload" as="image" href="/assets/images/frame.png">
     <title>Nathan Perrier</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   </head>
   <body>
     <div id="loading-screen">
@@ -15,6 +19,15 @@
     <img id="frame" src="/assets/images/frame.png" alt="frame" />
     <canvas id="bg"></canvas>
     <div id="app"></div>
+
+    <dialog class="nes-dialog is-dark is-rounded" id="timeout-dialog">
+      <form method="dialog">
+          <h1 class="title">Error Loading Scene</h1>
+          <p>The scene is taking a long time to load. Please try refreshing.</p>
+  
+          <button type="button" class="nes-btn is-primary" onclick="location.reload()">Refresh</button>
+      </form>
+    </dialog>
 
     <script type="module" src="/src/main.js"></script>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-4NFRXM7RJB"></script>
