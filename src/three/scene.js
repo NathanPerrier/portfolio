@@ -168,7 +168,6 @@ export function initScene() {
           reject(error);
         });
 
-        const { controls, update: updateControls } = createControls(camera, renderer, playerBody, interactiveObjects);
         const clock = new THREE.Clock();
 
         const composer = new EffectComposer(renderer);
@@ -185,7 +184,14 @@ export function initScene() {
         scanlinePass.renderToScreen = true;
         composer.addPass(scanlinePass);
 
-        const interactionHandler = createInteractionHandler(camera, interactiveObjects, controls, audioManager);
+        // Create interaction handler first
+        const interactionHandler = createInteractionHandler(camera, interactiveObjects, null, audioManager);
+        
+        // Create controls with interaction handler
+        const { controls, update: updateControls } = createControls(camera, renderer, playerBody, interactiveObjects, interactionHandler);
+        
+        // Update interaction handler with controls reference
+        interactionHandler.setControls(controls);
         
         // Count interactive objects and notify HUD manager
         if (hudManager) {

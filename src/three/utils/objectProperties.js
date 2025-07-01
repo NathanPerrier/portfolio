@@ -1,65 +1,72 @@
-import * as THREE from 'three';
 import { getAudioManager } from '../../utils/AudioManager.js';
 
 //adjust y for height
 
 export const objectProperties = {
   'computerTerminal_interactive': {
-    zoomPosition: new THREE.Vector3(-3.221266505960557, 6.331478322759962, -2.822122359189063), //6.731478322759962
-    lookAtPosition: new THREE.Vector3(-0.5323153475130797, -0.6295702822111388, -0.5659342988003256),
+    reposition: true,
+    position: { x: -4.25, y: 5, z: -4 }, 
+    lookAt: { x: -5.25, y: 5, z: -5 },  
     action: () => {
       console.log('Computer terminal action!');
     }
-
   },
   'computerWebsite_interactive': {
-    zoomPosition: new THREE.Vector3(-6.4, 2.5, -1.5),
+    reposition: true,
+    position: { x: -1.2, y: 4.9, z: -4.5 }, 
+    lookAt: { x: -1.2, y: 4.9, z: -5 }, 
     action: () => {
       console.log('Computer website action!');
     }
-
   },
   'whiteBoard_interactive': {
-    zoomPosition: new THREE.Vector3(-6.4, 2.5, -1.5),
+    reposition: true,
+    position: { x: 9, y: 5.5, z: 0 }, 
+    lookAt: { x: 9, y: 5.5, z: -5 }, 
     action: () => {
       console.log('Whiteboard action!');
     }
-
   },
   'arcade_interactive': {
-    zoomPosition: new THREE.Vector3(-6.4, 2.5, -1.5),
+    reposition: true,
+    position: { x: 19, y: 5.5, z: -3 }, 
+    lookAt: { x: 19, y: 5, z: -5 }, 
     action: () => {
       console.log('Arcade action!');
     }
   },
   'tv_interactive': {
-    zoomPosition: new THREE.Vector3(-6.4, 2.5, -1.5),
-    action: () => {
-      console.log('TV action!');
-    }
+    reposition: true,
+    position: { x: 11, y: 5.5, z: 14 }, 
+    lookAt: { x: 15, y: 5, z: 14 }, 
   },
   'github_interactive': {
+    reposition: false,
     action: () => window.open('https://github.com/nathanperrier', '_blank'),
   },
   'linkedin_interactive': {
+    reposition: false,
     action: () => window.open('https://www.linkedin.com/in/nathan-perrier23/', '_blank'),
   },
   'radio_interactive': {
-    action: (object) => {
+    reposition: false,
+    action: () => {
       const audioManager = getAudioManager();
-      const isPlaying = audioManager.toggleRadio();
+      audioManager.toggleRadio();
     }
   },
   'radio_interactive_1': {
-    action: (object) => {
+    reposition: false,
+    action: () => {
       const audioManager = getAudioManager();
-      const isPlaying = audioManager.toggleRadio();
+      audioManager.toggleRadio();
     }
   },
   'radio_interactive_2': {
-    action: (object) => {
+    reposition: false,
+    action: () => {
       const audioManager = getAudioManager();
-      const isPlaying = audioManager.toggleRadio();
+      audioManager.toggleRadio();
     }
   },
 };

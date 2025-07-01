@@ -4,7 +4,7 @@ import { device } from '../../utils/device.js';
 import { ScrollControls } from './ScrollControls.js';
 import { getAudioManager } from '../../utils/AudioManager.js';
 
-export function createControls(camera, renderer, playerBody, interactiveObjects) {
+export function createControls(camera, renderer, playerBody, interactiveObjects, interactionHandler = null) {
     if (device.isTouchOnly) {
         const controls = new ScrollControls(camera, interactiveObjects, renderer.domElement);
         function update() {
@@ -21,7 +21,10 @@ export function createControls(camera, renderer, playerBody, interactiveObjects)
 
     controls.addEventListener('lock', () => {
         cursor.style.display = 'none';
-        uiContainer.style.opacity = '0';
+        // Only hide UI if camera is not repositioned
+        if (!interactionHandler || !interactionHandler.isRepositioned()) {
+            uiContainer.style.opacity = '0';
+        }
         const audioManager = getAudioManager();
         audioManager.playSound('control_lock');
     });
@@ -89,6 +92,11 @@ export function createControls(camera, renderer, playerBody, interactiveObjects)
     });
 
     function update() {
+        // Don't update camera position if it's repositioned by interaction handler
+        if (interactionHandler && interactionHandler.isRepositioned()) {
+            return;
+        }
+
         const speed = 20;
 
         euler.setFromQuaternion(camera.quaternion);

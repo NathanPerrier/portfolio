@@ -1,5 +1,7 @@
 import { gsap } from 'gsap';
 import * as THREE from 'three';
+import { objectProperties } from './objectProperties.js';
+import { cleanString } from '../../utils/string.js';
 
 export class ScrollControls {
     constructor(camera, objects, domElement) {
@@ -8,6 +10,14 @@ export class ScrollControls {
         this.domElement = domElement;
         this.currentIndex = 0;
         this.isAnimating = false;
+        
+        // Filter objects to only include those with zoom positions or actions
+        this.zoomableObjects = this.objects.filter(obj => {
+            const properties = objectProperties[cleanString(obj.name)];
+            return properties && (properties.zoomPosition || properties.action);
+        });
+        
+        console.log('Mobile: Found interactive objects:', this.zoomableObjects.map(obj => obj.name));
 
         // Add a wrapper for scroll events if it doesn't exist
         if (!document.getElementById('scroll-container')) {
@@ -22,8 +32,8 @@ export class ScrollControls {
             wrapper.style.zIndex = '9999'; // Make sure it's on top
             
             const content = document.createElement('div');
-            // Set height to allow scrolling through all objects
-            content.style.height = `${this.objects.length * 100}vh`; 
+            // Set height to allow scrolling through all zoomable objects
+            content.style.height = `${this.zoomableObjects.length * 100}vh`; 
             wrapper.appendChild(content);
             document.body.appendChild(wrapper);
             this.scrollContainer = wrapper;
@@ -46,7 +56,7 @@ export class ScrollControls {
         const scrollPercentage = scrollTop / scrollHeight;
         
         // Determine the target index based on scroll position
-        const newIndex = Math.round(scrollPercentage * (this.objects.length - 1));
+        const newIndex = Math.round(scrollPercentage * (this.zoomableObjects.length - 1));
 
         if (newIndex !== this.currentIndex) {
             this.currentIndex = newIndex;
@@ -55,31 +65,64 @@ export class ScrollControls {
     }
 
     navigateTo(index) {
-        if (index < 0 || index >= this.objects.length) {
+        if (index < 0 || index >= this.zoomableObjects.length) {
             return;
         }
 
         this.isAnimating = true;
-        const targetObject = this.objects[index];
-
-        // Position to look at the object from a distance
-        const offset = new THREE.Vector3(0, 1, 5); // Adjust offset as needed
-        const targetPosition = new THREE.Vector3();
-        targetObject.getWorldPosition(targetPosition);
+        const targetObject = this.zoomableObjects[index];
+        const properties = objectProperties[cleanString(targetObject.name)];
         
-        const cameraPosition = targetPosition.clone().add(offset);
+        if (!properties) {
+            console.warn('Mobile: No properties for object:', targetObject.name);
+            this.isAnimating = false;
+            return;
+        }
+
+        console.log('Mobile: Navigating to object:', targetObject.name);
+
+        // If object has no zoom position, just execute action immediately
+        if (!properties.zoomPosition) {
+            console.log('Mobile: No zoom position, executing action immediately');
+            if (properties.action) {
+                properties.action(targetObject);
+            }
+            
+            // Dispatch interaction event for HUD tracking
+            window.dispatchEvent(new CustomEvent('object-interacted', { 
+                detail: { objectName: targetObject.name } 
+            }));
+            
+            this.isAnimating = false;
+            return;
+        }
+
+        // Use provided zoom and look-at positions
+        const zoomPosition = properties.zoomPosition;
+        const lookAtPosition = properties.lookAtPosition || new THREE.Box3().setFromObject(targetObject).getCenter(new THREE.Vector3());
 
         gsap.to(this.camera.position, {
             duration: 1.5,
-            x: cameraPosition.x,
-            y: cameraPosition.y,
-            z: cameraPosition.z,
+            x: zoomPosition.x,
+            y: zoomPosition.y,
+            z: zoomPosition.z,
             ease: 'power2.inOut',
             onUpdate: () => {
-                this.camera.lookAt(targetPosition);
+                this.camera.lookAt(lookAtPosition);
             },
             onComplete: () => {
                 this.isAnimating = false;
+                
+                // Execute action after reaching the position
+                if (properties.action) {
+                    console.log('Mobile: Executing action for:', targetObject.name);
+                    properties.action(targetObject);
+                }
+                
+                // Dispatch interaction event for HUD tracking
+                window.dispatchEvent(new CustomEvent('object-interacted', { 
+                    detail: { objectName: targetObject.name } 
+                }));
             },
         });
     }
