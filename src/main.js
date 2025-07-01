@@ -6,6 +6,7 @@ import './css/cursor.css';
 import { initScene } from './three/scene.js';
 import { initCursor, frameImage } from './utils/cursor.js';
 import { initNesUI } from './utils/welcomeDialog.js';
+import HudManager from './utils/hudManager.js';
 
 document.addEventListener('DOMContentLoaded', () => {
 
@@ -27,10 +28,17 @@ document.addEventListener('DOMContentLoaded', () => {
         }, timeoutDuration);
         
         try {
-            await initScene();
 
-            uiContainer.style.opacity = '1';
+            // uiContainer.style.opacity = '1';
             uiContainer.style.transition = 'opacity 0.3s ease-in-out';
+        
+            const scene = await initScene();
+            const hudManager = new HudManager();
+
+            // Pass hudManager to scene so it can track interactions
+            if (scene && scene.setHudManager) {
+                scene.setHudManager(hudManager);
+            }
             initNesUI();
 
             clearTimeout(timeout);

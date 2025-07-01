@@ -23,9 +23,52 @@
     </div>
     <div id="ui-container">
       <div id="ui-padding">
-        <div class="nes-container transparent-container" id="transparent-container">
-          <p>This is a transparent container.</p>
+        <!-- Top-right score display -->
+        <div class="nes-container is-rounded score-display" id="score-display">
+          <div class="score-item">
+            <span class="score-label">VISITS</span>
+            <span class="score-value" id="visit-count">000000</span>
+          </div>
+          <div class="score-item">
+            <span class="score-label">TIME</span>
+            <span class="score-value" id="time-spent">00:00</span>
+          </div>
         </div>
+
+        <!-- Top-left progress bar -->
+        <div class="nes-container is-rounded progress-display" id="progress-display">
+          <span class="progress-label">EXPLORATION</span>
+          <div class="progress-bar-container">
+            <progress class="nes-progress is-success" id="exploration-progress" value="0" max="100"></progress>
+            <span class="progress-text" id="progress-text">0/8</span>
+          </div>
+        </div>
+
+        <!-- Bottom navbar -->
+        <div class="nes-container navbar-display" id="navbar-display">
+          <div class="navbar-links">
+            <button type="button" class="nes-btn is-outline nav-btn" id="terminal-btn">
+              <div class="nav-btn-content">
+                <i class="nes-icon terminal" style="margin-right: 24px;">></i>
+                <span>TERMINAL</span>
+              </div>
+            </button>
+            <button type="button" class="nes-btn is-outline nav-btn" id="projects-btn">
+              <div class="nav-btn-content">
+                <i class="nes-icon trophy" style="margin-right: 24px;"></i>
+                <span>PROJECTS</span>
+              </div>
+            </button>
+            <button type="button" class="nes-btn nav-btn " id="arcade-btn">
+              <div class="nav-btn-content">
+                <i class="nes-icon coin" style="margin-right: 24px;"></i>
+                <!-- <i class="nes-logo"></i> -->
+                <span>ARCADE</span>
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div id="hud-ui">
@@ -38,7 +81,7 @@
             </div>
             <div class="dialog-page hidden" id="dialog-page-2">
               <h1 class="title">Controls</h1>
-              <p>Use WASD to move and mouse to look around. To begin control, simply press on the screen and to exit just press escape.</p>
+              <p>Use WASD to move and mouse to look around or just scroll on mobile devices. To begin control, simply press on the screen and to exit just press escape.</p>
             </div>
             <div class="dialog-page hidden" id="dialog-page-3">
               <h1 class="title">Interactions</h1>

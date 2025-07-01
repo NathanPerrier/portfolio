@@ -27,3 +27,6 @@ dist-ssr
 # blender files
 *.blend
 *.blend1
+
+# claude
+CLAUDE.md

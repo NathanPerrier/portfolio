@@ -51,6 +51,11 @@ export function createInteractionHandler(camera, interactiveObjects, controls) {
         if (properties && properties.action) {
             properties.action();
         }
+        
+        // Dispatch interaction event for HUD tracking
+        window.dispatchEvent(new CustomEvent('object-interacted', { 
+            detail: { objectName: object.name } 
+        }));
 
         if (controls.isLocked) {
             controls.unlock();
@@ -130,5 +135,24 @@ export function createInteractionHandler(camera, interactiveObjects, controls) {
         }
     }
 
-    return { update, onClick, isZoomed: () => isZoomed };
+    function navigateToObject(object) {
+        if (!isZoomed && object) {
+            lastIntersected = object;
+            zoomTo(object);
+        } else if (isZoomed) {
+            // First zoom out, then navigate
+            zoomOut();
+            setTimeout(() => {
+                lastIntersected = object;
+                zoomTo(object);
+            }, 1600); // Wait for zoom out animation
+        }
+    }
+
+    return { 
+        update, 
+        onClick, 
+        isZoomed: () => isZoomed,
+        navigateToObject
+    };
 }

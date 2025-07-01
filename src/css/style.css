@@ -7,14 +7,17 @@ body {
   width: 100vw;
   height: 100vh;
   z-index: 11;
-  pointer-events: none;
-  opacity: 0;
+  pointer-events: all;
 }
 
 #hud-ui, #timeout-ui {
   display: none;
-  opacity: 1;
   background-color: rgba(0, 0, 0, 0.5);
+}
+
+#ui-container {
+    pointer-events: none;
+    opacity: 0;
 }
 
 
@@ -64,14 +67,192 @@ body {
 }
 
 
-.transparent-container {
-  position: absolute; 
-  top: 20px; 
-  left: 20px; 
-  background: transparent; 
-  border-color: rgba(255, 255, 255, 0.6); 
+/* HUD Score Display (Top Right) */
+.score-display {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  border-color: rgba(255, 255, 255, 0.6);
   color: rgba(255, 255, 255, 0.6);
   z-index: 5;
+  padding: 12px 20px !important;
+  display: flex;
+  gap: 30px;
+  font-size: 12px;
+  pointer-events: all;
+}
+
+.score-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.score-label {
+  font-size: 10px;
+  color: rgba(146, 204, 65, 0.6);
+  letter-spacing: 1px;
+}
+
+.score-value {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.6);
+  font-family: 'Press Start 2P', cursive;
+}
+
+/* HUD Progress Display (Top Left) */
+.progress-display {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  border-color: rgba(255, 255, 255, 0.6);
+  color: rgba(255, 255, 255, 0.6);
+  z-index: 5;
+  padding: 12px 20px !important;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 250px;
+  pointer-events: all;
+}
+
+.nes-container.is-rounded {
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
+#exploration-progress, .nes-progress {
+  width: 100%;
+  height: 8px;
+  background-color: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.6);
+  border-radius: 4px;
+  overflow: hidden;
+  width: 100%;
+  height: 16px;
+}
+
+.progress-label {
+  font-size: 10px;
+  color: rgba(146, 204, 65, 0.6);
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+
+
+/* Progress Bar Container */
+.progress-bar-container {
+  position: relative;
+  width: 100%;
+}
+
+.progress-bar-container .progress-text {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  font-size: 10px;
+  mix-blend-mode: difference;
+  display: flex;
+  align-items: center;
+  color: rgba(255, 255, 255, 1);
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.progress-bar-container progress,
+.progress-bar-container .nes-progress {
+  color: rgba(146, 204, 65, 0.6);
+  pointer-events: none;
+}
+
+
+/* HUD Navbar (Bottom) */
+.navbar-display {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  bottom: 15%;
+  transform: translateX(-50%);
+  border: none;
+  padding: 12px 20px !important;
+}
+
+.navbar-links {
+  display: block;
+  align-items: unset;
+  gap: unset;
+  pointer-events: all;
+  white-space: nowrap;
+}
+
+.navbar-links > * {
+  display: inline-block;
+  vertical-align: middle;
+  margin-right: 20px;
+}
+
+.navbar-links > *:last-child {
+  margin-right: 0;
+}
+
+.nav-btn {
+  display: inline-block;
+  vertical-align: middle;
+  align-items: unset;
+  gap: unset;
+  padding: 8px 16px !important;
+  font-size: 10px !important;
+  background: none;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.navbar-display
+.nes-btn::after {
+  box-shadow: none !important;
+}
+
+.nav-btn-content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.nav-btn:hover {
+  background-color: rgba(255, 255, 255, 0.6);
+  transform: scale(1.05);
+}
+
+.nav-btn:hover .nav-btn-content {
+  color: rgba(0, 0, 0, 0.65);
+}
+
+.nav-btn:active {
+  transform: scale(0.95);
+}
+
+.nav-btn i {
+  margin-right: 4px;
+  opacity: 0.6;
+}
+
+.nav-btn span {
+  font-family: 'Press Start 2P', cursive;
+  letter-spacing: 1px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+
+  #ui-container {
+    display: none;
+  }
+
 }
 
 

@@ -16,7 +16,14 @@ import { ScanlineShader } from './utils/scanlineShader.js';
 import { device } from '../utils/device.js';
 
 export function initScene() {
-    return new Promise((resolve, reject) => {
+    let hudManager = null;
+    const sceneAPI = {
+        setHudManager: (manager) => {
+            hudManager = manager;
+        }
+    };
+    
+    const initPromise = new Promise((resolve, reject) => {
         const loadingScreen = document.getElementById('loading-screen');
         const loadingText = document.getElementById('loading-text');
         const { loadingManager, updateLoadingText } = createLoadingManager(loadingText);
@@ -69,7 +76,13 @@ export function initScene() {
             updateLoadingText('All assets loaded.');
             loadingText.style.display = 'none';
             loadingScreen.style.display = 'none';
-            resolve();
+            
+            // Set total interactables after everything is loaded
+            if (hudManager) {
+                hudManager.setTotalInteractables(interactiveObjects.length);
+            }
+            
+            resolve(sceneAPI);
         };
 
         loader.load('/assets/3d/room/room.glb', function (gltf) {
@@ -104,6 +117,7 @@ export function initScene() {
           scene.add(model);
           renderer.compile(scene, camera);
           updateLoadingText('Room loaded.');
+          
         }, undefined, function (error) {
           console.error(error);
           reject(error);
@@ -127,10 +141,66 @@ export function initScene() {
         composer.addPass(scanlinePass);
 
         const interactionHandler = createInteractionHandler(camera, interactiveObjects, controls);
+        
+        // Count interactive objects and notify HUD manager
+        if (hudManager) {
+            hudManager.setTotalInteractables(interactiveObjects.length);
+        }
 
         window.addEventListener('click', () => {
             if (!device.isTouchOnly) {
                 interactionHandler.onClick();
+            }
+        });
+        
+        // Listen for object interaction events from the interaction handler
+        window.addEventListener('object-interacted', (event) => {
+            if (hudManager) {
+                hudManager.addInteraction(event.detail.objectName);
+            }
+        });
+        
+        // Listen for HUD navigation events
+        window.addEventListener('hud-nav-click', (event) => {
+            const target = event.detail.target;
+            console.log(`Navigation clicked: ${target}`);
+            
+            // Handle navigation based on target
+            switch(target) {
+                case 'terminal':
+                    // Navigate to terminal object or open terminal UI
+                    const terminalObject = interactiveObjects.find(obj => 
+                        obj.name.toLowerCase().includes('terminal') || 
+                        obj.name.toLowerCase().includes('computer')
+                    );
+                    if (terminalObject) {
+                        interactionHandler.navigateToObject(terminalObject);
+                    }
+                    break;
+                    
+                case 'projects':
+                    // Navigate to projects display or portfolio items
+                    const projectsObject = interactiveObjects.find(obj => 
+                        obj.name.toLowerCase().includes('project') || 
+                        obj.name.toLowerCase().includes('portfolio') ||
+                        obj.name.toLowerCase().includes('board')
+                    );
+                    if (projectsObject) {
+                        interactionHandler.navigateToObject(projectsObject);
+                    }
+                    break;
+                    
+                case 'arcade':
+                    // Navigate to arcade machine or games
+                    const arcadeObject = interactiveObjects.find(obj => 
+                        obj.name.toLowerCase().includes('arcade') || 
+                        obj.name.toLowerCase().includes('game') ||
+                        obj.name.toLowerCase().includes('console')
+                    );
+                    if (arcadeObject) {
+                        interactionHandler.navigateToObject(arcadeObject);
+                    }
+                    break;
             }
         });
 
@@ -166,4 +236,6 @@ export function initScene() {
 
         animate();
     });
+    
+    return initPromise;
 }
