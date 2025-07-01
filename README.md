@@ -27,6 +27,11 @@ You need to have Node.js and npm installed.
 * Custom cursor
 * Loading screen
 
+## Assets
+
+100 Man Dollar Kid: Maboroshi no Teiou Hen (NES, Family Computer) (gamerip) (1988)
+
+
 ## License
 
 Distributed under the MIT License. See `LICENSE` for more information.

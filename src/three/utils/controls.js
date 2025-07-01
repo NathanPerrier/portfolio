@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
 import { device } from '../../utils/device.js';
 import { ScrollControls } from './ScrollControls.js';
+import { getAudioManager } from '../../utils/AudioManager.js';
 
 export function createControls(camera, renderer, playerBody, interactiveObjects) {
     if (device.isTouchOnly) {
@@ -21,11 +22,15 @@ export function createControls(camera, renderer, playerBody, interactiveObjects)
     controls.addEventListener('lock', () => {
         cursor.style.display = 'none';
         uiContainer.style.opacity = '0';
+        const audioManager = getAudioManager();
+        audioManager.playSound('control_lock');
     });
 
     controls.addEventListener('unlock', () => {
         cursor.style.display = 'block';
         uiContainer.style.opacity = '1';
+        const audioManager = getAudioManager();
+        audioManager.playSound('control_unlock');
     });
 
     renderer.domElement.addEventListener('click', () => {

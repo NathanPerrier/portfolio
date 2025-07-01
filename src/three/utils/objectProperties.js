@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import { getAudioManager } from '../../utils/AudioManager.js';
 
 //adjust y for height
 
@@ -44,17 +45,21 @@ export const objectProperties = {
     action: () => window.open('https://www.linkedin.com/in/nathan-perrier23/', '_blank'),
   },
   'radio_interactive': {
-    zoomPosition: new THREE.Vector3(-6.4, 2.5, -1.5),
-    action: () => {
-      console.log('Radio action!');
+    action: (object) => {
+      const audioManager = getAudioManager();
+      const isPlaying = audioManager.toggleRadio();
     }
   },
-  'waypoint_interactive': {
-    action: () => {
-      const waypoint = document.querySelector('.waypoint');
-      if (waypoint) {
-        waypoint.scrollIntoView({ behavior: 'smooth' });
-      }
+  'radio_interactive_1': {
+    action: (object) => {
+      const audioManager = getAudioManager();
+      const isPlaying = audioManager.toggleRadio();
+    }
+  },
+  'radio_interactive_2': {
+    action: (object) => {
+      const audioManager = getAudioManager();
+      const isPlaying = audioManager.toggleRadio();
     }
   },
 };

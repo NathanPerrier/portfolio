@@ -14,9 +14,11 @@ import { createLoadingManager } from './utils/loading.js';
 import { DistortionShader } from './utils/distortionShader.js';
 import { ScanlineShader } from './utils/scanlineShader.js';
 import { device } from '../utils/device.js';
+import { getAudioManager } from '../utils/AudioManager.js';
 
 export function initScene() {
     let hudManager = null;
+    const audioManager = getAudioManager();
     const sceneAPI = {
         setHudManager: (manager) => {
             hudManager = manager;
@@ -45,6 +47,10 @@ export function initScene() {
         const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         camera.lookAt(-15, 0, 0);
         updateLoadingText('Camera created.');
+        
+        // Attach audio listener to camera
+        audioManager.setCamera(camera);
+        updateLoadingText('Audio system initialized.');
 
         const renderer = new THREE.WebGLRenderer({
           canvas: document.querySelector('#bg'),
@@ -66,6 +72,11 @@ export function initScene() {
 
         const loader = new GLTFLoader(loadingManager);
         updateLoadingText('Asset loader created.');
+        
+        // Load sound effects
+        audioManager.loadEffectSounds().then(() => {
+            updateLoadingText('Sound effects loaded.');
+        });
 
         const playerBody = createPlayerPhysics(world);
         updateLoadingText('Player physics body created.');
@@ -74,13 +85,40 @@ export function initScene() {
 
         loadingManager.onLoad = () => {
             updateLoadingText('All assets loaded.');
+
             loadingText.style.display = 'none';
             loadingScreen.style.display = 'none';
-            
-            // Set total interactables after everything is loaded
+
             if (hudManager) {
                 hudManager.setTotalInteractables(interactiveObjects.length);
             }
+            
+            // Start radio audio in background (non-blocking) - only for radio_interactive_2
+            setTimeout(() => {
+                const allRadios = interactiveObjects.filter(obj => 
+                    obj.name.toLowerCase().includes('radio_interactive')
+                );
+                console.log('Found radio objects:', allRadios.map(r => r.name));
+                
+                // Try radio_interactive_2 first, then radio_interactive_1 if not found
+                let radioObject = interactiveObjects.find(obj => 
+                    obj.name.toLowerCase().includes('radio_interactive_2')
+                );
+                
+                if (!radioObject) {
+                    radioObject = interactiveObjects.find(obj => 
+                        obj.name.toLowerCase().includes('radio_interactive_1')
+                    );
+                }
+                
+                if (radioObject) {
+                    console.log('Setting up audio for:', radioObject.name);
+                    audioManager.createRadioAudio(radioObject);
+                } else {
+                    console.log('No radio object found. Available objects:', 
+                        interactiveObjects.map(obj => obj.name));
+                }
+            }, 1000);
             
             resolve(sceneAPI);
         };
@@ -105,6 +143,13 @@ export function initScene() {
                     interactiveObjects.push(node);
                     
                     createOutline(node);
+                    
+                    // Check if this is the radio object and attach positional audio
+                    if (node.name.toLowerCase().includes('radio_interactive_2')) {
+                        audioManager.createRadioAudio(node).then(() => {
+                            console.log('Radio audio attached to:', node.name);
+                        });
+                    }
                 }
             }
             if (node.isLight) {
@@ -140,7 +185,7 @@ export function initScene() {
         scanlinePass.renderToScreen = true;
         composer.addPass(scanlinePass);
 
-        const interactionHandler = createInteractionHandler(camera, interactiveObjects, controls);
+        const interactionHandler = createInteractionHandler(camera, interactiveObjects, controls, audioManager);
         
         // Count interactive objects and notify HUD manager
         if (hudManager) {
@@ -170,8 +215,7 @@ export function initScene() {
                 case 'terminal':
                     // Navigate to terminal object or open terminal UI
                     const terminalObject = interactiveObjects.find(obj => 
-                        obj.name.toLowerCase().includes('terminal') || 
-                        obj.name.toLowerCase().includes('computer')
+                        obj.name.toLowerCase().includes('computerterminal')
                     );
                     if (terminalObject) {
                         interactionHandler.navigateToObject(terminalObject);
@@ -181,9 +225,7 @@ export function initScene() {
                 case 'projects':
                     // Navigate to projects display or portfolio items
                     const projectsObject = interactiveObjects.find(obj => 
-                        obj.name.toLowerCase().includes('project') || 
-                        obj.name.toLowerCase().includes('portfolio') ||
-                        obj.name.toLowerCase().includes('board')
+                        obj.name.toLowerCase().includes('computerwebsite')
                     );
                     if (projectsObject) {
                         interactionHandler.navigateToObject(projectsObject);
@@ -193,9 +235,7 @@ export function initScene() {
                 case 'arcade':
                     // Navigate to arcade machine or games
                     const arcadeObject = interactiveObjects.find(obj => 
-                        obj.name.toLowerCase().includes('arcade') || 
-                        obj.name.toLowerCase().includes('game') ||
-                        obj.name.toLowerCase().includes('console')
+                        obj.name.toLowerCase().includes('arcade')
                     );
                     if (arcadeObject) {
                         interactionHandler.navigateToObject(arcadeObject);

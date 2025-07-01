@@ -1,4 +1,5 @@
 import { gsap } from 'gsap';
+import { getAudioManager } from './AudioManager.js';
 
 class HudManager {
   constructor() {
@@ -105,7 +106,16 @@ class HudManager {
   setupNavListeners() {
     Object.entries(this.navButtons).forEach(([key, button]) => {
       if (button) {
-        button.addEventListener('click', () => this.handleNavClick(key));
+        button.addEventListener('click', () => {
+          const audioManager = getAudioManager();
+          audioManager.playSound('button_press');
+          this.handleNavClick(key);
+        });
+        
+        button.addEventListener('mouseenter', () => {
+          const audioManager = getAudioManager();
+          audioManager.playSound('button_hover', 0.3);
+        });
       }
     });
   }
@@ -118,16 +128,16 @@ class HudManager {
   }
   
   playProgressSound() {
-    // Play a coin or achievement sound
-    // This would integrate with your AudioManager
-    window.dispatchEvent(new CustomEvent('play-sound', { 
-      detail: { sound: 'coin' } 
-    }));
+    const audioManager = getAudioManager();
+    audioManager.playSound('coin');
   }
   
   onFullExploration() {
     // Show achievement notification
     console.log('🎉 Congratulations! You explored everything!');
+    
+    const audioManager = getAudioManager();
+    audioManager.playSound('success');
     
     // Could show a special message or unlock something
     window.dispatchEvent(new CustomEvent('achievement-unlocked', { 

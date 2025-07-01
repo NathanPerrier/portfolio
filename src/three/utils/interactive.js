@@ -4,7 +4,7 @@ import gsap from 'gsap';
 import { objectProperties } from './objectProperties.js';
 import { cleanString } from '../../utils/string.js';
 
-export function createInteractionHandler(camera, interactiveObjects, controls) {
+export function createInteractionHandler(camera, interactiveObjects, controls, audioManager = null) {
     const raycaster = new THREE.Raycaster();
     let lastIntersected = null;
     let isZoomed = false;
@@ -32,12 +32,17 @@ export function createInteractionHandler(camera, interactiveObjects, controls) {
             lastIntersected.userData.outline.visible = false;
         }
 
+        let previousIntersected = lastIntersected;
         lastIntersected = null;
 
         if (intersects.length > 0) {
             const selectedObject = intersects[0].object;
             if (selectedObject.userData.outline) {
                 selectedObject.userData.outline.visible = true;
+                // Play hover sound only when selecting a new object (trigger once per entry)
+                if (previousIntersected !== selectedObject && audioManager) {
+                    audioManager.playSound('button_hover', 0.2);
+                }
                 lastIntersected = selectedObject;
             }
         }
@@ -46,10 +51,21 @@ export function createInteractionHandler(camera, interactiveObjects, controls) {
     function zoomTo(object) {
         isZoomed = true;
         zoomedObject = object;
+        console.log('Zooming to object:', object.name);
         const properties = objectProperties[cleanString(object.name)];
 
+        if (!(properties.zoomPosition) && properties.action) {
+            properties.action(object);
+            actionJustPerformed = true;
+            return;
+        }
+        // Play interaction sound effect
+        if (audioManager) {
+            audioManager.playSound('interact');
+        }
+
         if (properties && properties.action) {
-            properties.action();
+            properties.action(object);
         }
         
         // Dispatch interaction event for HUD tracking
@@ -128,10 +144,24 @@ export function createInteractionHandler(camera, interactiveObjects, controls) {
     }
 
     function onClick() {
+        if (isAnimating) return;
+
         if (isZoomed) {
             zoomOut();
         } else if (lastIntersected) {
-            zoomTo(lastIntersected);
+            // Special handling for radio object
+            if (lastIntersected.name.toLowerCase().includes('radio_interactive_2') && audioManager) {
+                audioManager.toggleRadio(lastIntersected);
+                // Play button press sound
+                audioManager.playSound('button_press');
+                
+                // Dispatch interaction event for HUD tracking
+                window.dispatchEvent(new CustomEvent('object-interacted', { 
+                    detail: { objectName: lastIntersected.name } 
+                }));
+            } else {
+                zoomTo(lastIntersected);
+            }
         }
     }
 
