@@ -7,8 +7,11 @@ import { initScene } from './three/scene.js';
 import { initCursor, frameImage } from './utils/cursor.js';
 import { initNesUI } from './utils/welcomeDialog.js';
 import HudManager from './utils/hudManager.js';
+import { resetAudioManager } from './utils/AudioManager.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Reset audio manager to ensure fresh random track selection
+    resetAudioManager();
 
     if (frameImage.complete) {
         initCursor();

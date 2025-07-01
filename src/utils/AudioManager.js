@@ -18,6 +18,8 @@ class AudioManager {
     this.radioTrackSelected = false;
     this.selectedRadioTrack = null;
     this.radioAudioCreated = false;
+    this.currentRadioAudio = null;
+    this.playedTracks = new Set(); // Track which songs have been played
     
     this.init();
   }
@@ -223,6 +225,8 @@ class AudioManager {
     if (!this.radioTrackSelected) {
       this.selectedRadioTrack = Math.floor(Math.random() * 16) + 1;
       this.radioTrackSelected = true;
+      this.playedTracks.add(this.selectedRadioTrack); // Mark as played
+      console.log(`🎵 Selected random radio track: ${this.selectedRadioTrack}`);
     } 
     
     const trackKey = 'radio_music';
@@ -241,12 +245,17 @@ class AudioManager {
       maxDistance: 25,
       rolloffFactor: 0.7,
       volume: 0.8,
-      loop: true
+      loop: false  // Don't loop - we'll handle track changes manually
     });
     
     if (radioAudio) {
-
       this.radioAudioCreated = true; // Mark radio audio as created globally
+      this.currentRadioAudio = radioAudio; // Store reference for shuffling
+      
+      // Set up track shuffling when song ends
+      radioAudio.onEnded = () => {
+        this.playNextRadioTrack();
+      };
       
       if (!this.isMuted) {
         // Resume audio context if needed before playing
@@ -261,6 +270,59 @@ class AudioManager {
     }
     
     return radioAudio;
+  }
+  
+  async playNextRadioTrack() {
+    if (!this.currentRadioAudio) return;
+    
+    // Stop current audio
+    this.currentRadioAudio.stop();
+    
+    // Select next random track (avoid recently played ones if possible)
+    let nextTrack;
+    let attempts = 0;
+    
+    do {
+      nextTrack = Math.floor(Math.random() * 16) + 1;
+      attempts++;
+    } while (this.playedTracks.has(nextTrack) && attempts < 20);
+    
+    // If we've played all tracks, reset the played tracks set
+    if (this.playedTracks.size >= 16) {
+      this.playedTracks.clear();
+      console.log('🔄 All tracks played, resetting shuffle');
+    }
+    
+    this.playedTracks.add(nextTrack);
+    console.log(`🎵 Shuffling to track: ${nextTrack} (played: ${this.playedTracks.size}/16)`);
+    
+    // Load and play the new track
+    try {
+      const newTrackKey = `radio_track_${nextTrack}`;
+      
+      // Load new track if not already loaded
+      if (!this.sounds.has(newTrackKey)) {
+        await this.loadSound(`/assets/audio/music/track${nextTrack}.mp3`, newTrackKey);
+      }
+      
+      // Update the current audio buffer
+      this.currentRadioAudio.setBuffer(this.sounds.get(newTrackKey));
+      
+      // Set up the ended callback for continuous shuffling
+      this.currentRadioAudio.onEnded = () => {
+        this.playNextRadioTrack();
+      };
+      
+      // Play the new track if not muted
+      if (!this.isMuted) {
+        this.currentRadioAudio.play();
+      }
+      
+    } catch (error) {
+      console.warn(`Failed to load next track ${nextTrack}:`, error);
+      // Retry with a different track
+      setTimeout(() => this.playNextRadioTrack(), 1000);
+    }
   }
   
   toggleRadio(radioKey) {    
@@ -360,6 +422,14 @@ export function getAudioManager() {
     audioManagerInstance = new AudioManager();
   }
   return audioManagerInstance;
+}
+
+// Force new instance on page load
+export function resetAudioManager() {
+  if (audioManagerInstance) {
+    audioManagerInstance.dispose();
+  }
+  audioManagerInstance = null;
 }
 
 export default AudioManager;
