@@ -9,8 +9,12 @@ import { initNesUI } from './utils/welcomeDialog.js';
 import HudManager from './utils/hudManager.js';
 import { device } from './utils/device.js';
 import { resetAudioManager } from './utils/AudioManager.js';
+import { analytics } from './utils/analytics.js';
 
 document.addEventListener('DOMContentLoaded', () => {
+    // Track device information on page load
+    analytics.trackDevice(device);
+    
     // Reset audio manager to ensure fresh random track selection
     resetAudioManager();
 
@@ -45,7 +49,14 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             uiContainer.style.transition = 'opacity 0.3s ease-in-out';
         
+            const loadStartTime = Date.now();
             const scene = await initScene();
+            const loadEndTime = Date.now();
+            const loadTime = loadEndTime - loadStartTime;
+            
+            // Track scene load time
+            analytics.trackLoadTime(loadTime);
+            
             const hudManager = new HudManager();
 
             // Pass hudManager to scene so it can track interactions
@@ -57,8 +68,19 @@ document.addEventListener('DOMContentLoaded', () => {
             clearTimeout(timeout);
         } catch (error) {
             console.error('Failed to initialize scene:', error);
+            analytics.trackError(error.message, 'scene_initialization');
             clearTimeout(timeout);
             timeoutDialog.style.display = 'flex';
         }
     }, 1500);
+});
+
+// Track session time when user leaves
+window.addEventListener('beforeunload', () => {
+    analytics.trackSessionTime();
+});
+
+// Global error handler
+window.addEventListener('error', (event) => {
+    analytics.trackError(event.error?.message || event.message, 'global_error');
 });

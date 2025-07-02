@@ -1,4 +1,5 @@
 import { getAudioManager } from './AudioManager.js';
+import { analytics } from './analytics.js';
 
 class AchievementManager {
   constructor() {
@@ -136,8 +137,13 @@ class AchievementManager {
       this.unlockedAchievements.add(achievementId);
       this.saveAchievements();
       
+      const achievement = this.achievements[achievementId];
+      
+      // Track achievement unlock in analytics
+      analytics.trackAchievement(achievement.title, achievement.description);
+      
       // Queue the achievement
-      this.achievementQueue.push(this.achievements[achievementId]);
+      this.achievementQueue.push(achievement);
       
       if (!this.isShowingAchievement) {
         this.processQueue();

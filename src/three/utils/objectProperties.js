@@ -1,4 +1,5 @@
 import { getAudioManager } from '../../utils/AudioManager.js';
+import { analytics } from '../../utils/analytics.js';
 
 //adjust y for height
 
@@ -42,31 +43,40 @@ export const objectProperties = {
   },
   'github_interactive': {
     reposition: false,
-    action: () => window.open('https://github.com/nathanperrier', '_blank'),
+    action: () => {
+      analytics.trackExternalLink('GitHub', 'https://github.com/nathanperrier');
+      window.open('https://github.com/nathanperrier', '_blank');
+    },
   },
   'linkedin_interactive': {
     reposition: false,
-    action: () => window.open('https://www.linkedin.com/in/nathan-perrier23/', '_blank'),
+    action: () => {
+      analytics.trackExternalLink('LinkedIn', 'https://www.linkedin.com/in/nathan-perrier23/');
+      window.open('https://www.linkedin.com/in/nathan-perrier23/', '_blank');
+    },
   },
   'radio_interactive': {
     reposition: false,
     action: () => {
       const audioManager = getAudioManager();
-      audioManager.toggleRadio();
+      const isPlaying = audioManager.toggleRadio();
+      analytics.trackMusicToggle(isPlaying);
     }
   },
   'radio_interactive_1': {
     reposition: false,
     action: () => {
       const audioManager = getAudioManager();
-      audioManager.toggleRadio();
+      const isPlaying = audioManager.toggleRadio();
+      analytics.trackMusicToggle(isPlaying);
     }
   },
   'radio_interactive_2': {
     reposition: false,
     action: () => {
       const audioManager = getAudioManager();
-      audioManager.toggleRadio();
+      const isPlaying = audioManager.toggleRadio();
+      analytics.trackMusicToggle(isPlaying);
     }
   },
 };

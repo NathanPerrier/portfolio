@@ -15,6 +15,7 @@ import { DistortionShader } from './utils/distortionShader.js';
 import { ScanlineShader } from './utils/scanlineShader.js';
 import { device } from '../utils/device.js';
 import { getAudioManager } from '../utils/AudioManager.js';
+import { analytics } from '../utils/analytics.js';
 
 export function initScene() {
     let hudManager = null;
@@ -199,14 +200,22 @@ export function initScene() {
         
         // Listen for object interaction events from the interaction handler
         window.addEventListener('object-interacted', (event) => {
+            const objectName = event.detail.objectName;
+            
+            // Track the interaction in analytics
+            analytics.trackInteraction(objectName);
+            
             if (hudManager) {
-                hudManager.addInteraction(event.detail.objectName);
+                hudManager.addInteraction(objectName);
             }
         });
         
         // Listen for HUD navigation events
         window.addEventListener('hud-nav-click', (event) => {
             const target = event.detail.target;
+            
+            // Track navigation button click
+            analytics.trackNavigationButton(target);
             
             // Handle navigation based on target
             switch(target) {
@@ -260,7 +269,7 @@ export function initScene() {
             
 
             //* DEBUG FUNCTIONALITY
-            cannonDebugger.update();
+            // cannonDebugger.update();
 
             interactionHandler.update();
 

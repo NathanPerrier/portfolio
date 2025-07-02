@@ -1,6 +1,7 @@
 import { gsap } from 'gsap';
 import { getAudioManager } from './AudioManager.js';
 import { getAchievementManager } from './achievementManager.js';
+import { analytics } from './analytics.js';
 
 class HudManager {
   constructor() {
@@ -87,6 +88,9 @@ class HudManager {
     if (!this.interactedObjects.has(objectName)) {
       this.interactedObjects.add(objectName);
       this.updateProgress();
+      
+      // Track progress in analytics
+      analytics.trackProgress(this.interactedObjects.size, this.totalInteractables);
       
       // Play a sound effect if available
       this.playProgressSound();

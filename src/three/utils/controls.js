@@ -83,8 +83,8 @@ export function createControls(camera, renderer, playerBody, interactiveObjects,
     });
 
     function update() {
-        // Don't update camera position if it's repositioned by interaction handler
-        if (interactionHandler && interactionHandler.isRepositioned()) {
+        // Don't update camera position if it's repositioned or animating
+        if (interactionHandler && (interactionHandler.isRepositioned() || interactionHandler.isAnimating())) {
             return;
         }
 

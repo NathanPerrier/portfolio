@@ -160,7 +160,7 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
         const targetPosition = repositionData.position;
         const targetQuaternion = new THREE.Quaternion();
         
-        // Calculate target quaternion by looking at the target
+        // Calculate target quaternion by looking at the target from the target position
         const tempCamera = new THREE.PerspectiveCamera();
         tempCamera.position.copy(targetPosition);
         tempCamera.lookAt(repositionData.lookAt);
@@ -208,7 +208,8 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
             }
         }
         
-        animateCamera();
+        // Start animation immediately
+        requestAnimationFrame(animateCamera);
     }
 
     function returnToOriginalPosition() {
