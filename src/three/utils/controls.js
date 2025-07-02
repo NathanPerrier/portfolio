@@ -1,17 +1,8 @@
 import * as THREE from 'three';
 import { PointerLockControls } from 'three/examples/jsm/controls/PointerLockControls.js';
-import { device } from '../../utils/device.js';
-import { ScrollControls } from './ScrollControls.js';
 import { getAudioManager } from '../../utils/AudioManager.js';
 
 export function createControls(camera, renderer, playerBody, interactiveObjects, interactionHandler = null) {
-    if (device.isTouchOnly) {
-        const controls = new ScrollControls(camera, interactiveObjects, renderer.domElement);
-        function update() {
-            controls.update();
-        }
-        return { controls, update };
-    }
 
     const controls = new PointerLockControls(camera, renderer.domElement);
     controls.pointerSpeed = 1.5;

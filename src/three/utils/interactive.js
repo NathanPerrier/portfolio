@@ -10,6 +10,7 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
     let isAnimating = false;
     let repositionedObject = null;
     let controlsRef = controls;
+    let clickDebounceTimeout = null;
     
     const originalCameraState = {
         position: new THREE.Vector3(),
@@ -28,9 +29,7 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
             e.stopPropagation(); 
             returnToOriginalPosition();
         });
-    } else {
-        console.log('Back button not found');
-    } 
+    }
 
     function showBackButton() {
         if (backButton) {
@@ -120,7 +119,6 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
         
         isAnimating = true;
         repositionedObject = object;
-        console.log('Repositioning camera for object:', object.name);
 
         // Play interaction sound
         if (audioManager) {
@@ -146,7 +144,6 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
 
         // Calculate new position
         const repositionData = calculateRepositionPoint(object);
-        console.log('Repositioning to:', repositionData.position, 'looking at:', repositionData.lookAt);
 
         // Animate camera to new position using custom animation loop
         const startPosition = camera.position.clone();
@@ -163,11 +160,6 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
         let animationProgress = 0;
         const animationDuration = 1500; // 1.5 seconds in milliseconds
         const startTime = Date.now();
-        
-        console.log('Camera animation setup in repositionCamera:');
-        console.log('- Current position:', camera.position.clone());
-        console.log('- Target position:', targetPosition);
-        console.log('- Target lookAt:', repositionData.lookAt);
         
         function animateCamera() {
             const elapsed = Date.now() - startTime;
@@ -199,10 +191,6 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
                 if (controlsRef && controlsRef.isLocked) {
                     controlsRef.unlock();
                 }
-
-                console.log("Camera reposition complete");
-                console.log('Camera position:', camera.position);
-                console.log('Camera lookAt Position:', camera.getWorldDirection(new THREE.Vector3()));
                 
                 // Show object outline
                 if (repositionedObject && repositionedObject.userData.outline) {
@@ -212,15 +200,12 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
         }
         
         animateCamera();
-        console.log('Animation started - animateCamera() called');
     }
 
     function returnToOriginalPosition() {
-        console.log('returnToOriginalPosition called. isRepositioned:', isRepositioned, 'isAnimating:', isAnimating);
         if (!isRepositioned || isAnimating) return;
         
         isAnimating = true;
-        console.log('Returning to original position');
 
         // Animate camera back to original position using custom animation loop
         const startPosition = camera.position.clone();
@@ -258,6 +243,11 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
                 isRepositioned = false;
                 hideBackButton();
                 
+                // Set 2-second debounce to prevent immediate clicks after zooming out
+                clickDebounceTimeout = setTimeout(() => {
+                    clickDebounceTimeout = null;
+                }, 2000);
+                
                 // Re-enable controls
                 if (controlsRef) {
                     controlsRef.enabled = true;
@@ -275,7 +265,7 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
     }
 
     function onClick() {
-        if (isAnimating) return;
+        if (isAnimating || clickDebounceTimeout) return;
 
         if (isRepositioned) {
             // Do nothing when repositioned - user must click back button

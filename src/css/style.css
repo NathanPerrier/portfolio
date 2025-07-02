@@ -2,7 +2,7 @@ body {
   cursor: none;
 }
 
-#hud-ui, #timeout-ui, #ui-container {
+#hud-ui, #timeout-ui, #ui-container, #device-ui {
   position: absolute;
   width: 100vw;
   max-width: 100vw;
@@ -13,9 +13,10 @@ body {
   pointer-events: all;
 }
 
-#hud-ui, #timeout-ui {
+#hud-ui, #timeout-ui, #device-ui {
   display: none;
   background-color: rgba(0, 0, 0, 0.5);
+  font-size: 2vw;
 }
 
 #ui-container {
@@ -24,7 +25,7 @@ body {
 }
 
 
-#hud-padding, #timeout-padding {
+#hud-padding, #timeout-padding, #device-padding {
   height: 100%;
   display: flex;
   position: absolute;
@@ -43,7 +44,7 @@ body {
   bottom: 7.5%;
 }
 
-#hud-dialog , #timeout-dialog {
+#hud-dialog , #timeout-dialog, #device-dialog {
   display: flex !important;
   justify-content: center;
   align-items: center;
@@ -191,6 +192,54 @@ body {
   color: rgba(146, 204, 65, 0.6);
   pointer-events: none;
 }
+
+
+#achievement-container.show {
+  opacity: 1;
+  transition: ease-in-out 0.3s;
+}
+
+#achievement-container {
+  opacity: 0;
+  transition: 0.5s ease-in-out;
+}
+
+.achievement-balloon {
+  position: absolute;
+  top: 12.5%;
+  left: 1.5%;
+  transform: rotate(180deg);
+  background: rgba(255, 255, 255, 0.6);
+  opacity: 0.6;
+}
+
+.achievement-content {
+  transform: rotate(-180deg);
+}
+
+.achievement-title {
+  margin: 0 0 10px 0;
+  font-size: 14px;
+  color: rgba(255, 215, 0, 0.9) !important;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family: 'Press Start 2P', monospace !important;
+}
+
+.achievement-icon {
+  font-size: 20px;
+  opacity: 0.8;
+}
+
+.achievement-description {
+  margin: 0;
+  font-size: 10px;
+  color: rgb(36, 36, 36, 0.8) !important;
+  line-height: 1.4;
+  font-family: 'Press Start 2P', monospace !important;
+}
+
 
 
 /* HUD Navbar (Bottom) */

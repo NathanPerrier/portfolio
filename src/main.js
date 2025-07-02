@@ -7,6 +7,7 @@ import { initScene } from './three/scene.js';
 import { initCursor, frameImage } from './utils/cursor.js';
 import { initNesUI } from './utils/welcomeDialog.js';
 import HudManager from './utils/hudManager.js';
+import { device } from './utils/device.js';
 import { resetAudioManager } from './utils/AudioManager.js';
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -19,20 +20,29 @@ document.addEventListener('DOMContentLoaded', () => {
         frameImage.onload = initCursor;
     }
 
+    if (device.isTouchOnly) {
+        const cursor = document.querySelector('.custom-cursor');
+        if (cursor) {
+            cursor.style.display = 'none';
+        }
+
+        const deviceMessage = document.getElementById('device-ui');
+
+        if (deviceMessage) {
+            deviceMessage.style.display = 'flex';
+        }
+    }
+
     setTimeout(async () => {
         const timeoutDialog = document.getElementById('timeout-ui');
         const uiContainer = document.getElementById('ui-container');
 
         const timeoutDuration = 10000; // 10 seconds
-
-        const timeout = setTimeout(() => {
-            
+        const timeout = setTimeout(() => {    
             timeoutDialog.style.display = 'flex';
         }, timeoutDuration);
         
         try {
-
-            // uiContainer.style.opacity = '1';
             uiContainer.style.transition = 'opacity 0.3s ease-in-out';
         
             const scene = await initScene();

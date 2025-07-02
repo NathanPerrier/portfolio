@@ -226,7 +226,6 @@ class AudioManager {
       this.selectedRadioTrack = Math.floor(Math.random() * 16) + 1;
       this.radioTrackSelected = true;
       this.playedTracks.add(this.selectedRadioTrack); // Mark as played
-      console.log(`🎵 Selected random radio track: ${this.selectedRadioTrack}`);
     } 
     
     const trackKey = 'radio_music';
@@ -290,11 +289,9 @@ class AudioManager {
     // If we've played all tracks, reset the played tracks set
     if (this.playedTracks.size >= 16) {
       this.playedTracks.clear();
-      console.log('🔄 All tracks played, resetting shuffle');
     }
     
     this.playedTracks.add(nextTrack);
-    console.log(`🎵 Shuffling to track: ${nextTrack} (played: ${this.playedTracks.size}/16)`);
     
     // Load and play the new track
     try {

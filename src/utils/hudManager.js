@@ -1,5 +1,6 @@
 import { gsap } from 'gsap';
 import { getAudioManager } from './AudioManager.js';
+import { getAchievementManager } from './achievementManager.js';
 
 class HudManager {
   constructor() {
@@ -31,6 +32,9 @@ class HudManager {
     
     // Setup nav button listeners
     this.setupNavListeners();
+    
+    // Sync with saved achievements
+    this.syncWithSavedAchievements();
     
     // Show HUD with animation
     this.showHUD();
@@ -86,6 +90,9 @@ class HudManager {
       
       // Play a sound effect if available
       this.playProgressSound();
+
+      const achievementManager = getAchievementManager();
+      achievementManager.checkObjectDiscovery(objectName);
     }
   }
   
@@ -101,6 +108,10 @@ class HudManager {
     if (this.interactedObjects.size === this.totalInteractables && this.totalInteractables > 0) {
       this.onFullExploration();
     }
+    
+    // Check for all discovered achievement
+    const achievementManager = getAchievementManager();
+    achievementManager.checkAllDiscovered(this.interactedObjects.size);
   }
   
   setupNavListeners() {
@@ -132,10 +143,40 @@ class HudManager {
     audioManager.playSound('coin');
   }
   
+  syncWithSavedAchievements() {
+    try {
+      const saved = localStorage.getItem('portfolio_achievements');
+      if (saved) {
+        const unlockedAchievements = JSON.parse(saved);
+        
+        // Map achievement IDs back to object names to populate interactedObjects
+        const achievementToObjectMap = {
+          'computerTerminal': 'computerTerminal_interactive',
+          'computerWebsite': 'computerWebsite_interactive', 
+          'whiteBoard': 'whiteBoard_interactive',
+          'arcade': 'arcade_interactive',
+          'tv': 'tv_interactive',
+          'github': 'github_interactive',
+          'linkedin': 'linkedin_interactive',
+          'radio': 'radio_interactive'
+        };
+        
+        unlockedAchievements.forEach(achievementId => {
+          const objectName = achievementToObjectMap[achievementId];
+          if (objectName) {
+            this.interactedObjects.add(objectName);
+          }
+        });
+        
+        // Update progress bar
+        this.updateProgress();
+      }
+    } catch (e) {
+      console.error('Failed to sync with saved achievements:', e);
+    }
+  }
+
   onFullExploration() {
-    // Show achievement notification
-    console.log('🎉 Congratulations! You explored everything!');
-    
     const audioManager = getAudioManager();
     audioManager.playSound('success');
     

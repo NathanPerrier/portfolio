@@ -8,7 +8,7 @@ export function initNesUI() {
     const totalPages = dialogPages.length;
     let currentPage = 1;
 
-    if (sessionStorage.getItem('welcomeDialogSeen')) {
+    if (localStorage.getItem('welcomeDialogSeen')) {
         hudUI.style.display = 'none';
         return;
     }
@@ -56,7 +56,7 @@ export function initNesUI() {
     function closeDialog() {
         hudUI.style.display = 'none';
         hudDialog.close();
-        sessionStorage.setItem('welcomeDialogSeen', 'true');
+        localStorage.setItem('welcomeDialogSeen', 'true');
     }
 
     updateDialogButtons();

@@ -44,6 +44,18 @@
           </div>
         </div>
 
+        <div id="achievement-container">
+          <div class="nes-balloon left achievement-balloon" id="achievement-popup">
+            <div class="achievement-content">
+              <h3 class="achievement-title" id="achievement-title">
+                <span class="achievement-icon" id="achievement-icon">🏆</span>
+                <span id="achievement-title-text">Achievement Unlocked!</span>
+              </h3>
+              <p class="achievement-description" id="achievement-description">You discovered something!</p>
+            </div>
+          </div>
+        </div>
+
         <!-- Back button -->
         <button type="button" class="nes-btn back-btn" id="back-button">
           <i class="nes-icon close"></i>
@@ -117,6 +129,17 @@
               <p>The scene is taking a long time to load. Please try refreshing.</p>
       
               <button type="button" class="nes-btn is-primary" onclick="location.reload()">Refresh</button>
+          </form>
+        </dialog>
+      </div>
+    </div>
+
+    <div id="device-ui">
+      <div id="device-padding">
+        <dialog class="nes-dialog is-dark is-rounded" id="device-dialog">
+          <form method="dialog">
+              <h1 class="title">Incompatible Device</h1>
+              <p>This website requires a mouse and keyboard, please use a laptop or desktop.</p>
           </form>
         </dialog>
       </div>

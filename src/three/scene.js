@@ -98,7 +98,6 @@ export function initScene() {
                 const allRadios = interactiveObjects.filter(obj => 
                     obj.name.toLowerCase().includes('radio_interactive')
                 );
-                console.log('Found radio objects:', allRadios.map(r => r.name));
                 
                 // Try radio_interactive_2 first, then radio_interactive_1 if not found
                 let radioObject = interactiveObjects.find(obj => 
@@ -112,12 +111,8 @@ export function initScene() {
                 }
                 
                 if (radioObject) {
-                    console.log('Setting up audio for:', radioObject.name);
                     audioManager.createRadioAudio(radioObject);
-                } else {
-                    console.log('No radio object found. Available objects:', 
-                        interactiveObjects.map(obj => obj.name));
-                }
+                } 
             }, 1000);
             
             resolve(sceneAPI);
@@ -146,9 +141,7 @@ export function initScene() {
                     
                     // Check if this is the radio object and attach positional audio
                     if (node.name.toLowerCase().includes('radio_interactive_2')) {
-                        audioManager.createRadioAudio(node).then(() => {
-                            console.log('Radio audio attached to:', node.name);
-                        });
+                        audioManager.createRadioAudio(node)
                     }
                 }
             }
@@ -214,7 +207,6 @@ export function initScene() {
         // Listen for HUD navigation events
         window.addEventListener('hud-nav-click', (event) => {
             const target = event.detail.target;
-            console.log(`Navigation clicked: ${target}`);
             
             // Handle navigation based on target
             switch(target) {
@@ -269,10 +261,7 @@ export function initScene() {
 
             //* DEBUG FUNCTIONALITY
             // cannonDebugger.update();
-
-            // console.log('Camera position:', camera.position);
-            // console.log('Camera lookAt:', camera.getWorldDirection(new THREE.Vector3()));
-
+            
             interactionHandler.update();
 
             scanlinePass.uniforms.time.value = elapsedTime;
