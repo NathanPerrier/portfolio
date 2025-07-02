@@ -37,7 +37,6 @@ export const objectProperties = {
     position: { x: 19, y: 5.5, z: -3 }, 
     lookAt: { x: 19, y: 5, z: -5 }, 
     action: (object) => {
-      // The arcade screen is initialized in scene.js and attached to the object
       if (object.userData.arcadeScreen) {
         object.userData.arcadeScreen.show();
         analytics.trackInteraction('arcade', 'play_game');
@@ -48,6 +47,11 @@ export const objectProperties = {
     reposition: true,
     position: { x: 11, y: 5.5, z: 14 }, 
     lookAt: { x: 15, y: 5, z: 14 }, 
+    action: (object) => {
+      if (object.userData.tvScreen) {
+        object.userData.tvScreen.show();
+      }
+    }
   },
   'github_interactive': {
     reposition: false,

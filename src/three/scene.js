@@ -17,6 +17,7 @@ import { device } from '../utils/device.js';
 import { getAudioManager } from '../utils/AudioManager.js';
 import { analytics } from '../utils/analytics.js';
 import { ArcadeScreenTexture } from './utils/arcadeScreenTexture.js';
+import { TVGifTexture } from './utils/tvGifTexture.js';
 
 export function initScene() {
     let hudManager = null;
@@ -95,6 +96,7 @@ export function initScene() {
 
         const interactiveObjects = [];
         const arcadeScreen = new ArcadeScreenTexture();
+        const tvScreen = new TVGifTexture();
 
         loadingManager.onLoad = () => {
             updateLoadingText('All assets loaded.');
@@ -162,6 +164,13 @@ export function initScene() {
                         arcadeScreen.init(node);
                         node.userData.arcadeScreen = arcadeScreen;
                         updateLoadingText('Arcade screen initialized.');
+                    }
+                    
+                    // Initialize TV screen for TV object
+                    if (node.name.toLowerCase().includes('tv_interactive')) {
+                        tvScreen.init(node);
+                        node.userData.tvScreen = tvScreen;
+                        updateLoadingText('TV screen initialized.');
                     }
                 }
             }
