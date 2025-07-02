@@ -35,6 +35,22 @@ export function initScene() {
 
         updateLoadingText('Initializing scene...');
 
+        // Check WebGL support before proceeding
+        const canvas = document.querySelector('#bg');
+        if (!canvas) {
+            reject(new Error('Canvas element not found'));
+            return;
+        }
+
+        // Test WebGL capabilities
+        const testCanvas = document.createElement('canvas');
+        const gl = testCanvas.getContext('webgl2') || testCanvas.getContext('webgl') || testCanvas.getContext('experimental-webgl');
+        if (!gl) {
+            reject(new Error('WebGL is not supported in your browser. Please ensure hardware acceleration is enabled.'));
+            return;
+        }
+        updateLoadingText('WebGL support verified.');
+
         const scene = new THREE.Scene();
         updateLoadingText('Scene created.');
 
@@ -55,11 +71,33 @@ export function initScene() {
         audioManager.setCamera(camera);
         updateLoadingText('Audio system initialized.');
 
-        const renderer = new THREE.WebGLRenderer({
-          canvas: document.querySelector('#bg'),
-          antialias: true,
-          alpha: true
-        });
+        // Try to create WebGL renderer with fallback options for Windows compatibility
+        let renderer;
+        try {
+            renderer = new THREE.WebGLRenderer({
+                canvas: document.querySelector('#bg'),
+                antialias: true,
+                alpha: true,
+                powerPreference: "high-performance",
+                failIfMajorPerformanceCaveat: false,
+                preserveDrawingBuffer: true
+            });
+        } catch (error) {
+            console.error('Failed to create WebGL renderer with antialiasing:', error);
+            // Try without antialiasing
+            try {
+                renderer = new THREE.WebGLRenderer({
+                    canvas: document.querySelector('#bg'),
+                    antialias: false,
+                    alpha: true,
+                    powerPreference: "high-performance",
+                    failIfMajorPerformanceCaveat: false,
+                    preserveDrawingBuffer: true
+                });
+            } catch (fallbackError) {
+                throw new Error('Failed to create WebGL context. Please ensure your browser supports WebGL and hardware acceleration is enabled.');
+            }
+        }
         renderer.setClearColor(0x000000, 0);
         updateLoadingText('Renderer created.');
 

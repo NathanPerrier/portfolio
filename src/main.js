@@ -70,6 +70,23 @@ document.addEventListener('DOMContentLoaded', () => {
             console.error('Failed to initialize scene:', error);
             analytics.trackError(error.message, 'scene_initialization');
             clearTimeout(timeout);
+            
+            // Update timeout dialog with specific error message
+            const dialogTitle = timeoutDialog.querySelector('.title');
+            const dialogMessage = timeoutDialog.querySelector('p');
+            
+            if (error.message.includes('WebGL')) {
+                dialogTitle.textContent = 'WebGL Not Supported';
+                dialogMessage.innerHTML = 'WebGL is required to run this application.<br><br>' +
+                    'Please ensure:<br>' +
+                    '• Hardware acceleration is enabled in your browser<br>' +
+                    '• Your graphics drivers are up to date<br>' +
+                    '• Your browser supports WebGL (Chrome, Firefox, Edge recommended)';
+            } else {
+                dialogTitle.textContent = 'Error Loading Scene';
+                dialogMessage.textContent = error.message || 'The scene failed to load. Please try refreshing.';
+            }
+            
             timeoutDialog.style.display = 'flex';
         }
     }, 1500);
