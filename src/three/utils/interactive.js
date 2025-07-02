@@ -11,6 +11,7 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
     let repositionedObject = null;
     let controlsRef = controls;
     let clickDebounceTimeout = null;
+    let windowFocusDebounceTimeout = null;
     
     const originalCameraState = {
         position: new THREE.Vector3(),
@@ -30,6 +31,14 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
             returnToOriginalPosition();
         });
     }
+    
+    // Add window focus event listener for external link debounce
+    window.addEventListener('focus', () => {
+        // Set debounce when window regains focus (user returns from external link)
+        windowFocusDebounceTimeout = setTimeout(() => {
+            windowFocusDebounceTimeout = null;
+        }, 3000); // 2-second debounce after returning from external link
+    });
 
     function showBackButton() {
         if (backButton) {
@@ -277,6 +286,11 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
                 if (properties.reposition) {
                     repositionCamera(lastIntersected);
                 } else {
+                    // Check for window focus debounce for non-repositioning objects (external links)
+                    if (windowFocusDebounceTimeout) {
+                        return;
+                    }
+                    
                     // Execute action immediately for non-repositioning objects
                     if (audioManager) {
                         audioManager.playSound('interact');

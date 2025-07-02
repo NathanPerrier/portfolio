@@ -260,8 +260,8 @@ export function initScene() {
             
 
             //* DEBUG FUNCTIONALITY
-            // cannonDebugger.update();
-            
+            cannonDebugger.update();
+
             interactionHandler.update();
 
             scanlinePass.uniforms.time.value = elapsedTime;

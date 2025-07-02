@@ -88,9 +88,13 @@ export function createControls(camera, renderer, playerBody, interactiveObjects,
             return;
         }
 
-        const speed = 20;
+        const speed = 60;
 
+        // Only use Y rotation (yaw) for movement, ignore pitch to maintain consistent speed
         euler.setFromQuaternion(camera.quaternion);
+        euler.x = 0; // Remove pitch component
+        euler.z = 0; // Remove roll component
+        
         const moveDirection = new THREE.Vector3(inputVelocity.x, 0, inputVelocity.z);
         moveDirection.normalize().applyEuler(euler);
 
@@ -98,7 +102,7 @@ export function createControls(camera, renderer, playerBody, interactiveObjects,
         playerBody.velocity.z = moveDirection.z * speed;
 
         camera.position.copy(playerBody.position);
-        camera.position.y += 6; // Adjust this value to set the camera height
+        camera.position.y += 3; // Camera at top of player box (center + 3 = 8)
     }
 
     return { controls, update };
