@@ -1,5 +1,6 @@
 import { getAudioManager } from '../../utils/AudioManager.js';
 import { analytics } from '../../utils/analytics.js';
+import { whiteboardManager } from '../../utils/whiteboard.js';
 
 //adjust y for height
 
@@ -24,16 +25,23 @@ export const objectProperties = {
     reposition: true,
     position: { x: 9, y: 5.5, z: 0 }, 
     lookAt: { x: 9, y: 5.5, z: -5 }, 
-    action: () => {
-      console.log('Whiteboard action!');
+    action: (object, camera) => {
+      if (!whiteboardManager.whiteboardMesh) {
+        whiteboardManager.init(object, camera);
+      }
+      whiteboardManager.show();
     }
   },
   'arcade_interactive': {
     reposition: true,
     position: { x: 19, y: 5.5, z: -3 }, 
     lookAt: { x: 19, y: 5, z: -5 }, 
-    action: () => {
-      console.log('Arcade action!');
+    action: (object) => {
+      // The arcade screen is initialized in scene.js and attached to the object
+      if (object.userData.arcadeScreen) {
+        object.userData.arcadeScreen.show();
+        analytics.trackInteraction('arcade', 'play_game');
+      }
     }
   },
   'tv_interactive': {

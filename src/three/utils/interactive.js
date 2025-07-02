@@ -2,6 +2,7 @@ import * as THREE from 'three';
 
 import { objectProperties } from './objectProperties.js';
 import { cleanString } from '../../utils/string.js';
+import { whiteboardManager } from '../../utils/whiteboard.js';
 
 export function createInteractionHandler(camera, interactiveObjects, controls, audioManager = null) {
     const raycaster = new THREE.Raycaster();
@@ -37,7 +38,7 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
         // Set debounce when window regains focus (user returns from external link)
         windowFocusDebounceTimeout = setTimeout(() => {
             windowFocusDebounceTimeout = null;
-        }, 3000); // 2-second debounce after returning from external link
+        }, 5000); 
     });
 
     function showBackButton() {
@@ -147,6 +148,18 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
             controlsRef.enabled = false;
         }
 
+        // Clear window focus debounce when repositioning
+        if (windowFocusDebounceTimeout) {
+            clearTimeout(windowFocusDebounceTimeout);
+            windowFocusDebounceTimeout = null;
+        }
+
+        // Clear click debounce when repositioning
+        if (clickDebounceTimeout) {
+            clearTimeout(clickDebounceTimeout);
+            clickDebounceTimeout = null;
+        }
+
         // Store original camera state
         originalCameraState.position.copy(camera.position);
         originalCameraState.quaternion.copy(camera.quaternion);
@@ -205,6 +218,12 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
                 if (repositionedObject && repositionedObject.userData.outline) {
                     repositionedObject.userData.outline.visible = true;
                 }
+
+                // object action
+                const properties = objectProperties[cleanString(repositionedObject.name)];
+                if (properties && properties.action) {
+                    properties.action(repositionedObject, camera);
+                }
             }
         }
         
@@ -253,10 +272,16 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
                 isRepositioned = false;
                 hideBackButton();
                 
+                // Clear window focus debounce when returning to original position
+                if (windowFocusDebounceTimeout) {
+                    clearTimeout(windowFocusDebounceTimeout);
+                    windowFocusDebounceTimeout = null;
+                }
+                
                 // Set 2-second debounce to prevent immediate clicks after zooming out
                 clickDebounceTimeout = setTimeout(() => {
                     clickDebounceTimeout = null;
-                }, 2000);
+                }, 5000);
                 
                 // Re-enable controls
                 if (controlsRef) {
@@ -267,6 +292,19 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
                 if (repositionedObject && repositionedObject.userData.outline) {
                     repositionedObject.userData.outline.visible = false;
                 }
+                
+                // Hide whiteboard UI if it was open
+                if (repositionedObject && cleanString(repositionedObject.name) === 'whiteBoard_interactive') {
+                    whiteboardManager.hide();
+                }
+                
+                // Hide arcade screen if it was open
+                if (repositionedObject && cleanString(repositionedObject.name) === 'arcade_interactive') {
+                    if (repositionedObject.userData.arcadeScreen) {
+                        repositionedObject.userData.arcadeScreen.hide();
+                    }
+                }
+                
                 repositionedObject = null;
             }
         }
@@ -285,6 +323,11 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
             
             if (properties) {
                 if (properties.reposition) {
+                    // Clear window focus debounce before repositioning
+                    if (windowFocusDebounceTimeout) {
+                        clearTimeout(windowFocusDebounceTimeout);
+                        windowFocusDebounceTimeout = null;
+                    }
                     repositionCamera(lastIntersected);
                 } else {
                     // Check for window focus debounce for non-repositioning objects (external links)

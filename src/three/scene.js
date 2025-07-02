@@ -16,6 +16,7 @@ import { ScanlineShader } from './utils/scanlineShader.js';
 import { device } from '../utils/device.js';
 import { getAudioManager } from '../utils/AudioManager.js';
 import { analytics } from '../utils/analytics.js';
+import { ArcadeScreenTexture } from './utils/arcadeScreenTexture.js';
 
 export function initScene() {
     let hudManager = null;
@@ -70,6 +71,16 @@ export function initScene() {
         renderer.setPixelRatio(window.devicePixelRatio);
 
         renderer.setSize(window.innerWidth, window.innerHeight);
+        
+        // Create CSS3D renderer
+        const css3dRenderer = new CSS3DRenderer();
+        css3dRenderer.setSize(window.innerWidth, window.innerHeight);
+        css3dRenderer.domElement.style.position = 'absolute';
+        css3dRenderer.domElement.style.top = '0';
+        css3dRenderer.domElement.style.pointerEvents = 'none';
+        css3dRenderer.domElement.style.zIndex = '0';
+        document.getElementById('css-renderer').appendChild(css3dRenderer.domElement);
+        updateLoadingText('CSS3D renderer created.');
 
         const loader = new GLTFLoader(loadingManager);
         updateLoadingText('Asset loader created.');
@@ -83,6 +94,7 @@ export function initScene() {
         updateLoadingText('Player physics body created.');
 
         const interactiveObjects = [];
+        const arcadeScreen = new ArcadeScreenTexture();
 
         loadingManager.onLoad = () => {
             updateLoadingText('All assets loaded.');
@@ -143,6 +155,13 @@ export function initScene() {
                     // Check if this is the radio object and attach positional audio
                     if (node.name.toLowerCase().includes('radio_interactive_2')) {
                         audioManager.createRadioAudio(node)
+                    }
+                    
+                    // Initialize arcade screen for arcade object
+                    if (node.name.toLowerCase().includes('arcade_interactive')) {
+                        arcadeScreen.init(node);
+                        node.userData.arcadeScreen = arcadeScreen;
+                        updateLoadingText('Arcade screen initialized.');
                     }
                 }
             }
@@ -257,6 +276,7 @@ export function initScene() {
             camera.updateProjectionMatrix();
 
             renderer.setSize(window.innerWidth, window.innerHeight);
+            css3dRenderer.setSize(window.innerWidth, window.innerHeight);
             composer.setSize(window.innerWidth, window.innerHeight);
         }
 
@@ -276,6 +296,7 @@ export function initScene() {
             scanlinePass.uniforms.time.value = elapsedTime;
 
             composer.render();
+            css3dRenderer.render(scene, camera);
         }
 
         animate();
