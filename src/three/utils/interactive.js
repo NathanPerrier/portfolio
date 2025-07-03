@@ -11,7 +11,7 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
     let isAnimating = false;
     let repositionedObject = null;
     let controlsRef = controls;
-    let clickDebounceTimeout = null;
+    let wasControlsUnlocked = !controls || !controls.isLocked;
     let windowFocusDebounceTimeout = null;
     
     const originalCameraState = {
@@ -30,6 +30,17 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
 
             e.stopPropagation(); 
             returnToOriginalPosition();
+        });
+    }
+    
+    // Set up control state tracking
+    if (controlsRef) {
+        controlsRef.addEventListener('lock', () => {
+            wasControlsUnlocked = false;
+        });
+        
+        controlsRef.addEventListener('unlock', () => {
+            wasControlsUnlocked = true;
         });
     }
     
@@ -140,11 +151,11 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
             detail: { objectName: object.name } 
         }));
 
-        // Disable controls
-        if (controlsRef && controlsRef.isLocked) {
-            controlsRef.unlock();
-        }
+        // Disable and unlock controls
         if (controlsRef) {
+            if (controlsRef.isLocked) {
+                controlsRef.unlock();
+            }
             controlsRef.enabled = false;
         }
 
@@ -152,12 +163,6 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
         if (windowFocusDebounceTimeout) {
             clearTimeout(windowFocusDebounceTimeout);
             windowFocusDebounceTimeout = null;
-        }
-
-        // Clear click debounce when repositioning
-        if (clickDebounceTimeout) {
-            clearTimeout(clickDebounceTimeout);
-            clickDebounceTimeout = null;
         }
 
         // Store original camera state
@@ -209,9 +214,12 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
                 isRepositioned = true;
                 showBackButton();
 
-                // unlock controls if they were locked
-                if (controlsRef && controlsRef.isLocked) {
-                    controlsRef.unlock();
+                // Keep controls unlocked and disabled while repositioned
+                if (controlsRef) {
+                    if (controlsRef.isLocked) {
+                        controlsRef.unlock();
+                    }
+                    controlsRef.enabled = false;
                 }
                 
                 // Show object outline
@@ -278,14 +286,11 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
                     windowFocusDebounceTimeout = null;
                 }
                 
-                // Set 2-second debounce to prevent immediate clicks after zooming out
-                clickDebounceTimeout = setTimeout(() => {
-                    clickDebounceTimeout = null;
-                }, 5000);
-                
                 // Re-enable controls
                 if (controlsRef) {
                     controlsRef.enabled = true;
+                    // Track that controls are now unlocked for the transition detection
+                    wasControlsUnlocked = true;
                 }
                 
                 // Clear repositioned object outline
@@ -313,7 +318,14 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
     }
 
     function onClick() {
-        if (isAnimating || clickDebounceTimeout) return;
+        if (isAnimating) return;
+
+        // Check if controls exist and if they were unlocked before this click
+        if (controlsRef && wasControlsUnlocked && !controlsRef.isLocked) {
+            // This click is for locking controls, not for interacting with objects
+            // The controls will be locked after this click event propagates
+            return;
+        }
 
         if (isRepositioned) {
             // Do nothing when repositioned - user must click back button
@@ -377,6 +389,17 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
 
     function setControls(newControls) {
         controlsRef = newControls;
+        
+        // Add listeners to track control state changes
+        if (controlsRef) {
+            controlsRef.addEventListener('lock', () => {
+                wasControlsUnlocked = false;
+            });
+            
+            controlsRef.addEventListener('unlock', () => {
+                wasControlsUnlocked = true;
+            });
+        }
     }
 
     return { 

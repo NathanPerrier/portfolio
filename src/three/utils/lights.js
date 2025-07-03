@@ -19,9 +19,6 @@ export function addLights(scene) {
     directionalLight2.shadow.mapSize.height = 2048;
     scene.add( directionalLight2 );
 
-    // Ambient lights provide general illumination and do not cast shadows.
-    // Multiple ambient lights are redundant; their colors and intensities are simply combined.
-    // Here, we are creating two distinct ambient lights based on the original code's colors.
     const ambientLight1 = new THREE.AmbientLight(0xFF9839, 1.0); // Combined intensity of 0.5 + 0.5
     scene.add(ambientLight1);
 

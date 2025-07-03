@@ -28,7 +28,10 @@ export function createControls(camera, renderer, playerBody, interactiveObjects,
     });
 
     renderer.domElement.addEventListener('click', () => {
-        controls.lock();
+        // Don't lock controls if camera is repositioned
+        if (!interactionHandler || !interactionHandler.isRepositioned()) {
+            controls.lock();
+        }
     });
 
     const inputVelocity = new THREE.Vector3();
