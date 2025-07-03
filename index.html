@@ -131,7 +131,10 @@
               <h1 class="title">Error Loading Scene</h1>
               <p>The scene is taking a long time to load. Please try refreshing.</p>
       
-              <button type="button" class="nes-btn is-primary" onclick="location.reload()">Refresh</button>
+              <div class="dialog-buttons">
+                <button type="button" class="nes-btn is-primary" onclick="location.reload()">Refresh</button>
+                <button type="button" class="nes-btn" onclick="window.location.href='https://nathanperrier.github.io/portfolio-projects/'">Alternative Site</button>
+              </div>
           </form>
         </dialog>
       </div>
@@ -143,6 +146,8 @@
           <form method="dialog">
               <h1 class="title">Incompatible Device</h1>
               <p>This website requires a mouse and keyboard, please use a laptop or desktop.</p>
+              
+              <button type="button" class="nes-btn is-primary" onclick="window.location.href='https://nathanperrier.github.io/portfolio-projects/'">Visit Alternative Site</button>
           </form>
         </dialog>
       </div>

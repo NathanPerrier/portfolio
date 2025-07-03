@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
         
         try {
             uiContainer.style.transition = 'opacity 0.3s ease-in-out';
-        
+            
             const loadStartTime = Date.now();
             const scene = await initScene();
             const loadEndTime = Date.now();
@@ -81,10 +81,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     'Please ensure:<br>' +
                     '• Hardware acceleration is enabled in your browser<br>' +
                     '• Your graphics drivers are up to date<br>' +
-                    '• Your browser supports WebGL (Chrome, Firefox, Edge recommended)';
+                    '• Your browser supports WebGL (Chrome, Firefox, Edge recommended)<br><br>' +
+                    'Alternatively, you can visit the simplified portfolio site.';
             } else {
                 dialogTitle.textContent = 'Error Loading Scene';
-                dialogMessage.textContent = error.message || 'The scene failed to load. Please try refreshing.';
+                dialogMessage.innerHTML = (error.message || 'The scene failed to load. Please try refreshing.') +
+                    '<br><br>Alternatively, you can visit the simplified portfolio site.';
             }
             
             timeoutDialog.style.display = 'flex';

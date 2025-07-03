@@ -7,16 +7,16 @@ import { whiteboardManager } from '../../utils/whiteboard.js';
 export const objectProperties = {
   'computerTerminal_interactive': {
     reposition: true,
-    position: { x: -4.25, y: 5, z: -4 }, 
-    lookAt: { x: -5.25, y: 5, z: -5 },  
+    position: { x: -1.2, y: 4.9, z: -4.5 }, 
+    lookAt: { x: -1.2, y: 4.9, z: -5 },  
     action: () => {
       console.log('Computer terminal action!');
     }
   },
   'computerWebsite_interactive': {
     reposition: true,
-    position: { x: -1.2, y: 4.9, z: -4.5 }, 
-    lookAt: { x: -1.2, y: 4.9, z: -5 }, 
+    position: { x: -4.25, y: 5, z: -4 }, 
+    lookAt: { x: -5.25, y: 5, z: -5 }, 
     action: () => {
       console.log('Computer website action!');
     }
