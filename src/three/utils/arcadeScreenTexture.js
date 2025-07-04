@@ -147,10 +147,7 @@ export class ArcadeScreenTexture {
         
         // Reset and start game
         this.game.reset();
-        this.game.isRunning = true;
-        
-        // Start update loop
-        this.update();
+        this.game.start(); // This starts the game's own loop
     }
     
     hide() {
@@ -160,13 +157,7 @@ export class ArcadeScreenTexture {
         
         // Stop game
         if (this.game) {
-            this.game.isRunning = false;
-        }
-        
-        // Cancel animation frame
-        if (this.animationId) {
-            cancelAnimationFrame(this.animationId);
-            this.animationId = null;
+            this.game.stop(); // This properly stops the game's loop
         }
         
         // Show attract mode again
@@ -174,18 +165,9 @@ export class ArcadeScreenTexture {
     }
     
     update() {
-        if (!this.isActive) return;
-        
-        // Update game
-        if (this.game && this.game.isRunning) {
-            this.game.update();
-            this.game.draw();
-            
-            // Update texture
+        // Only update the texture, the game has its own update loop
+        if (this.isActive && this.texture) {
             this.texture.needsUpdate = true;
         }
-        
-        // Continue animation loop
-        this.animationId = requestAnimationFrame(() => this.update());
     }
 }

@@ -320,6 +320,13 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
     function onClick() {
         if (isAnimating) return;
 
+        // Check if whiteboard is active - if so, allow clicks for drawing
+        const whiteboardOverlay = document.getElementById('whiteboard-overlay');
+        if (whiteboardOverlay && whiteboardOverlay.style.display === 'block') {
+            // Don't interfere with whiteboard drawing
+            return;
+        }
+
         // Check if controls exist and if they were unlocked before this click
         if (controlsRef && wasControlsUnlocked && !controlsRef.isLocked) {
             // This click is for locking controls, not for interacting with objects

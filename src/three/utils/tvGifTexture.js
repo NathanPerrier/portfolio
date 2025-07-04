@@ -18,7 +18,6 @@ export class TVGifTexture {
         
         // Load GIF texture using threejs-gif-texture
         THREE_GetGifTexture('/assets/images/tv.gif').then(texture => {
-            console.log('TV GIF loaded successfully');
             this.gifTexture = texture;
             this.texture = texture;
             
@@ -199,7 +198,6 @@ export class TVGifTexture {
     }
     
     show() {
-        console.log('TV show() called');
         
         if (this.screenMesh) {
             this.screenMesh.visible = true;

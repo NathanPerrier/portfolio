@@ -16,6 +16,7 @@
     "cannon-es-debugger": "^1.0.0",
     "device-detector-js": "^3.0.3",
     "gsap": "^3.13.0",
+    "html2canvas": "^1.4.1",
     "nes.css": "^2.2.1",
     "on-screen-keyboard-detector": "^2.3.0",
     "three": "^0.177.0",

@@ -18,6 +18,8 @@ import { getAudioManager } from '../utils/AudioManager.js';
 import { analytics } from '../utils/analytics.js';
 import { ArcadeScreenTexture } from './utils/arcadeScreenTexture.js';
 import { TVGifTexture } from './utils/tvGifTexture.js';
+import { ComputerTerminalTexture } from './utils/computerTerminalTexture.js';
+
 
 export function initScene() {
     let hudManager = null;
@@ -135,6 +137,7 @@ export function initScene() {
         const interactiveObjects = [];
         const arcadeScreen = new ArcadeScreenTexture();
         const tvScreen = new TVGifTexture();
+        const computerTerminalScreen = new ComputerTerminalTexture();
 
         loadingManager.onLoad = () => {
             updateLoadingText('All assets loaded.');
@@ -209,6 +212,13 @@ export function initScene() {
                         tvScreen.init(node);
                         node.userData.tvScreen = tvScreen;
                         updateLoadingText('TV screen initialized.');
+                    }
+                    
+                    // Initialize computer terminal screen
+                    if (node.name.toLowerCase().includes('computerterminal_interactive')) {
+                        computerTerminalScreen.init(node);
+                        node.userData.computerTerminalScreen = computerTerminalScreen;
+                        updateLoadingText('Computer terminal screen initialized.');
                     }
                 }
             }
@@ -344,6 +354,10 @@ export function initScene() {
 
             composer.render();
             css3dRenderer.render(scene, camera);
+            
+            // Update screens that have update methods
+            if (arcadeScreen && arcadeScreen.update) arcadeScreen.update();
+            if (computerTerminalScreen && computerTerminalScreen.update) computerTerminalScreen.update();
         }
 
         animate();

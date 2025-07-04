@@ -16,4 +16,7 @@ export const device = {
     hasMouse: hasMouse(),
     hasKeyboard: hasPhysicalKeyboard(),
     isTouchOnly: hasTouch() && !hasMouse() && !hasPhysicalKeyboard(),
+    width: window.innerWidth,
+    height: window.innerHeight,
+    isWidthCompatible: window.innerWidth >= 768,
 };

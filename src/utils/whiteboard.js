@@ -22,7 +22,6 @@ export class WhiteboardManager {
     init(whiteboardMesh, camera) {
         this.whiteboardMesh = whiteboardMesh;
         this.camera = camera;
-        console.log('Initializing whiteboard with mesh:', whiteboardMesh);
         
         // Create offscreen canvas
         this.canvas = document.createElement('canvas');
@@ -194,17 +193,15 @@ export class WhiteboardManager {
     }
 
     show() {
-        console.log('Showing whiteboard UI');
         if (this.uiContainer) {
             this.uiContainer.style.display = 'block';
-            console.log('UI container shown');
         } else {
             console.error('No UI container found!');
         }
+
         const overlay = document.getElementById('whiteboard-overlay');
         if (overlay) {
             overlay.style.display = 'block';
-            console.log('Overlay shown');
         } else {
             console.error('No overlay found!');
         }
@@ -225,7 +222,6 @@ export class WhiteboardManager {
         this.currentColor = color;
         this.currentTool = 'marker';
         document.getElementById('whiteboard-overlay').style.cursor = 'crosshair';
-        console.log(`Selected color: ${color}`);
     }
 
     clearBoard() {

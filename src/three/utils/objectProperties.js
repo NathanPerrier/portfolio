@@ -9,16 +9,22 @@ export const objectProperties = {
     reposition: true,
     position: { x: -1.2, y: 4.9, z: -4.5 }, 
     lookAt: { x: -1.2, y: 4.9, z: -5 },  
-    action: () => {
-      console.log('Computer terminal action!');
+    action: (object) => {
+      if (object.userData.computerTerminalScreen) {
+        object.userData.computerTerminalScreen.show();
+        analytics.trackInteraction('computer_terminal', 'view_test');
+      }
     }
   },
   'computerWebsite_interactive': {
     reposition: true,
     position: { x: -4.25, y: 5, z: -4 }, 
     lookAt: { x: -5.25, y: 5, z: -5 }, 
-    action: () => {
-      console.log('Computer website action!');
+    action: (object) => {
+      if (object.userData.websiteScreen) {
+        object.userData.websiteScreen.show();
+        analytics.trackInteraction('computer_website', 'view_portfolio');
+      }
     }
   },
   'whiteBoard_interactive': {
