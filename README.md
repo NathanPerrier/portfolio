@@ -6,6 +6,11 @@ An interactive 3D portfolio website built with Three.js and Vite.
 [![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
 [![NES.css](https://img.shields.io/badge/NES.css-209CEE?style=for-the-badge&logo=css3&logoColor=white)](https://nostalgic-css.github.io/NES.css/)
 
+
+<div align="center">
+  <img src="./public/images/preview.png" height="500px" alt="Portfolio Preview">
+</div>
+
 ## Getting Started
 
 To get a local copy up and running follow these simple steps.
