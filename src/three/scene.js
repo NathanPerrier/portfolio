@@ -140,13 +140,13 @@ export function initScene() {
         const arcadeScreen = new ArcadeScreenTexture();
         const tvScreen = new TVGifTexture();
         const computerTerminalScreen = new ComputerTexture({ 
-            src: '/terminal/index.html',
+            src: import.meta.env.BASE_URL + 'terminal/index.html',
             enableKeyboard: true,
             emissiveColor: 0x00ff00,
             emissiveIntensity: 15
         });
         const computerWebsiteScreen = new ComputerTexture({
-            src: '/portfolio/index.html',
+            src: import.meta.env.BASE_URL + 'portfolio/index.html',
             enableKeyboard: false,
             enableMouse: true,
             emissiveColor: 0x00ff00,
@@ -191,7 +191,7 @@ export function initScene() {
             resolve(sceneAPI);
         };
 
-        loader.load('/assets/3d/room/room.glb', function (gltf) {
+        loader.load(import.meta.env.BASE_URL + 'assets/3d/room/room.glb', function (gltf) {
           const model = gltf.scene;
           model.traverse(function (node) {
             if (node.isMesh) {

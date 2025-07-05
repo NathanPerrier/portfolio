@@ -17,7 +17,7 @@ export class TVGifTexture {
         this.tvMesh = tvMesh;
         
         // Load GIF texture using threejs-gif-texture
-        THREE_GetGifTexture('/assets/images/tv.gif').then(texture => {
+        THREE_GetGifTexture(import.meta.env.BASE_URL + 'assets/images/tv.gif').then(texture => {
             this.gifTexture = texture;
             this.texture = texture;
             

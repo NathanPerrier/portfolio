@@ -8,7 +8,7 @@ An interactive 3D portfolio website built with Three.js and Vite.
 
 
 <div align="center">
-  <img src="./public/images/preview.png" height="500px" alt="Portfolio Preview">
+  <img src="./public/assets/images/preview.png" height="500px" alt="Portfolio Preview">
 </div>
 
 ## Getting Started
