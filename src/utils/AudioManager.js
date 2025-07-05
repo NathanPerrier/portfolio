@@ -54,7 +54,7 @@ class AudioManager {
     // Load all music tracks
     const trackPromises = [];
     for (let i = 1; i <= 16; i++) {
-      const promise = this.loadSound(`/assets/audio/music/track${i}.mp3`, `music_track_${i}`);
+      const promise = this.loadSound(import.meta.env.BASE_URL + `/assets/audio/music/track${i}.mp3`, `music_track_${i}`);
       trackPromises.push(promise);
     }
     
@@ -144,7 +144,7 @@ class AudioManager {
     ];
     
     const promises = effectsToLoad.map(({ name, file }) => 
-      this.loadSound(`/assets/audio/effects/${file}`, name)
+      this.loadSound(import.meta.env.BASE_URL + `/assets/audio/effects/${file}`, name)
     );
     
     await Promise.all(promises);
@@ -232,7 +232,7 @@ class AudioManager {
     
     if (!this.sounds.has(trackKey)) {
       try {
-        await this.loadSound(`/assets/audio/music/track${this.selectedRadioTrack}.mp3`, trackKey);
+        await this.loadSound(import.meta.env.BASE_URL + `/assets/audio/music/track${this.selectedRadioTrack}.mp3`, trackKey);
       } catch (error) {
         console.warn('Failed to load radio music:', error);
         return null;
@@ -299,7 +299,7 @@ class AudioManager {
       
       // Load new track if not already loaded
       if (!this.sounds.has(newTrackKey)) {
-        await this.loadSound(`/assets/audio/music/track${nextTrack}.mp3`, newTrackKey);
+        await this.loadSound(import.meta.env.BASE_URL + `/assets/audio/music/track${nextTrack}.mp3`, newTrackKey);
       }
       
       // Update the current audio buffer
