@@ -105,7 +105,7 @@ export function initScene() {
 
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFShadowMap; // Less expensive than PCFSoftShadowMap
-        renderer.outputEncoding = THREE.sRGBEncoding;
+        renderer.outputColorSpace = THREE.SRGBColorSpace;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
         renderer.toneMappingExposure =  .45;
 

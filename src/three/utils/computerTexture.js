@@ -170,7 +170,7 @@ export class ComputerTexture {
             if (this.isActive && !this.isInputActive && !this.isMouseActive) {
                 this.renderIframeToCanvas();
             }
-        }, 10000000);
+        }, 10000); // 10 seconds
     }
     
     startRendering() {
