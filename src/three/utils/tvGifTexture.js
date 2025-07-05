@@ -141,53 +141,62 @@ export class TVGifTexture {
     startColorSampling() {
         // Create a small canvas to sample the texture color
         const sampleCanvas = document.createElement('canvas');
-        const sampleSize = 32; // Small size for performance
+        const sampleSize = 16; // Reduced from 32 for better performance
         sampleCanvas.width = sampleSize;
         sampleCanvas.height = sampleSize;
         const sampleCtx = sampleCanvas.getContext('2d');
         
+        let frameCount = 0;
+        const SAMPLE_RATE = 4; // Sample every 4th frame (15 FPS instead of 60 FPS)
+        
         const animate = () => {
             if (!this.gifTexture || !this.screenLight) return;
             
-            // The GIF texture updates automatically, we need to sample its dominant color
-            // Since we can't directly access the GIF frames, we'll use the texture's image property
-            if (this.gifTexture.image) {
-                try {
-                    // Draw the current frame to our sample canvas
-                    sampleCtx.drawImage(this.gifTexture.image, 0, 0, sampleSize, sampleSize);
-                    
-                    // Get the image data
-                    const imageData = sampleCtx.getImageData(0, 0, sampleSize, sampleSize);
-                    const data = imageData.data;
-                    
-                    // Calculate average color
-                    let r = 0, g = 0, b = 0;
-                    let validPixels = 0;
-                    
-                    for (let i = 0; i < data.length; i += 4) {
-                        // Skip very dark pixels
-                        if (data[i] + data[i + 1] + data[i + 2] > 30) {
-                            r += data[i];
-                            g += data[i + 1];
-                            b += data[i + 2];
-                            validPixels++;
+            frameCount++;
+            
+            // Only sample every SAMPLE_RATE frames
+            if (frameCount % SAMPLE_RATE === 0) {
+                // The GIF texture updates automatically, we need to sample its dominant color
+                // Since we can't directly access the GIF frames, we'll use the texture's image property
+                if (this.gifTexture.image) {
+                    try {
+                        // Draw the current frame to our sample canvas
+                        sampleCtx.drawImage(this.gifTexture.image, 0, 0, sampleSize, sampleSize);
+                        
+                        // Get the image data
+                        const imageData = sampleCtx.getImageData(0, 0, sampleSize, sampleSize);
+                        const data = imageData.data;
+                        
+                        // Calculate average color with simplified sampling
+                        let r = 0, g = 0, b = 0;
+                        let validPixels = 0;
+                        
+                        // Sample every 4th pixel for better performance
+                        for (let i = 0; i < data.length; i += 16) {
+                            // Skip very dark pixels
+                            if (data[i] + data[i + 1] + data[i + 2] > 30) {
+                                r += data[i];
+                                g += data[i + 1];
+                                b += data[i + 2];
+                                validPixels++;
+                            }
                         }
-                    }
-                    
-                    if (validPixels > 0) {
-                        r = Math.floor(r / validPixels) / 255;
-                        g = Math.floor(g / validPixels) / 255;
-                        b = Math.floor(b / validPixels) / 255;
                         
-                        // Update the light color
-                        this.screenLight.color.setRGB(r, g, b);
-                        
-                        // Adjust intensity based on brightness
-                        const brightness = (r + g + b) / 3;
-                        this.screenLight.intensity = 2 + brightness * 3;
+                        if (validPixels > 0) {
+                            r = Math.floor(r / validPixels) / 255;
+                            g = Math.floor(g / validPixels) / 255;
+                            b = Math.floor(b / validPixels) / 255;
+                            
+                            // Update the light color
+                            this.screenLight.color.setRGB(r, g, b);
+                            
+                            // Adjust intensity based on brightness
+                            const brightness = (r + g + b) / 3;
+                            this.screenLight.intensity = 2 + brightness * 3;
+                        }
+                    } catch (e) {
+                        // Canvas might not be ready yet
                     }
-                } catch (e) {
-                    // Canvas might not be ready yet
                 }
             }
             

@@ -7,7 +7,7 @@ export const ScanlineShader = {
 		'tDiffuse': { value: null },
 		'nIntensity': { value: 0.1 },
 		'sIntensity': { value: 0.1 },
-		'sCount': { value: 2048 },
+		'sCount': { value: 2048 }, // Reduced from 2048 for performance
 		'time': { value: 0.0 },
 
 	},

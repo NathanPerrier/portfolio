@@ -18,7 +18,7 @@ import { getAudioManager } from '../utils/AudioManager.js';
 import { analytics } from '../utils/analytics.js';
 import { ArcadeScreenTexture } from './utils/arcadeScreenTexture.js';
 import { TVGifTexture } from './utils/tvGifTexture.js';
-import { ComputerTerminalTexture } from './utils/computerTerminalTexture.js';
+import { ComputerTexture } from './utils/computerTexture.js';
 
 
 export function initScene() {
@@ -104,12 +104,14 @@ export function initScene() {
         updateLoadingText('Renderer created.');
 
         renderer.shadowMap.enabled = true;
-        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        renderer.shadowMap.type = THREE.PCFShadowMap; // Less expensive than PCFSoftShadowMap
         renderer.outputEncoding = THREE.sRGBEncoding;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
         renderer.toneMappingExposure =  .45;
 
-        renderer.setPixelRatio(window.devicePixelRatio);
+        // Limit pixel ratio to 2 for performance
+        const pixelRatio = Math.min(window.devicePixelRatio, 2);
+        renderer.setPixelRatio(pixelRatio);
 
         renderer.setSize(window.innerWidth, window.innerHeight);
         
@@ -137,7 +139,22 @@ export function initScene() {
         const interactiveObjects = [];
         const arcadeScreen = new ArcadeScreenTexture();
         const tvScreen = new TVGifTexture();
-        const computerTerminalScreen = new ComputerTerminalTexture();
+        const computerTerminalScreen = new ComputerTexture({ 
+            src: '/terminal/index.html',
+            enableKeyboard: true,
+            emissiveColor: 0x00ff00,
+            emissiveIntensity: 15
+        });
+        const computerWebsiteScreen = new ComputerTexture({
+            src: '/portfolio/index.html',
+            enableKeyboard: false,
+            enableMouse: true,
+            emissiveColor: 0x00ff00,
+            emissiveIntensity: 15,
+            screenWidth: 1.6,
+            screenHeight: 1.5,
+            screenPosition: { x: 0, y: 0.075, z: .9 },
+        });
 
         loadingManager.onLoad = () => {
             updateLoadingText('All assets loaded.');
@@ -184,9 +201,13 @@ export function initScene() {
                 if (node.material && node.material.map) {
                     node.material.map.minFilter = THREE.LinearMipmapLinearFilter;
                     node.material.map.generateMipmaps = true;
-                    node.material.map.anisotropy = renderer.capabilities.getMaxAnisotropy();
+                    // Limit anisotropy for performance
+                    node.material.map.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
                     node.material.map.needsUpdate = true;
                 }
+                
+                // Enable frustum culling for all meshes
+                node.frustumCulled = true;
 
                 createObjectPhysics(node, world);
             
@@ -214,19 +235,29 @@ export function initScene() {
                         updateLoadingText('TV screen initialized.');
                     }
                     
-                    // Initialize computer terminal screen
+                    // // Initialize computer terminal screen
                     if (node.name.toLowerCase().includes('computerterminal_interactive')) {
                         computerTerminalScreen.init(node);
                         node.userData.computerTerminalScreen = computerTerminalScreen;
                         updateLoadingText('Computer terminal screen initialized.');
+                        // Don't start rendering immediately
+                        computerTerminalScreen.hide();
+                    }
+
+                    if (node.name.toLowerCase().includes('computerwebsite_interactive')) {
+                        computerWebsiteScreen.init(node);
+                        node.userData.websiteScreen = computerWebsiteScreen;
+                        updateLoadingText('Computer website screen initialized.');
+                        // Don't start rendering immediately
+                        computerWebsiteScreen.hide();
                     }
                 }
             }
             if (node.isLight) {
                 node.castShadow = true;
                 node.shadow.bias = -0.0005;
-                node.shadow.mapSize.width = 1024;
-                node.shadow.mapSize.height = 1024;
+                node.shadow.mapSize.width = 512; // Reduced from 1024
+                node.shadow.mapSize.height = 512; // Reduced from 1024
             }
           });
           scene.add(model);
@@ -243,12 +274,21 @@ export function initScene() {
         const composer = new EffectComposer(renderer);
         composer.addPass(new RenderPass(scene, camera));
 
-        const bloomPass = new UnrealBloomPass( new THREE.Vector2( window.innerWidth, window.innerHeight ), .2, 0.4, 0.85 );
+        // Reduce bloom resolution for better performance
+        const bloomResolution = new THREE.Vector2(
+            window.innerWidth / 2,  // Half resolution
+            window.innerHeight / 2
+        );
+        const bloomPass = new UnrealBloomPass(bloomResolution, .2, 0.4, 0.85);
         composer.addPass(bloomPass);
 
-        const distortionPass = new ShaderPass(DistortionShader);
-        distortionPass.uniforms['strength'].value = .165;
-        composer.addPass(distortionPass);
+        // Optional: disable distortion for performance
+        const enableDistortion = !device.isMobile; // Disable on mobile
+        if (enableDistortion) {
+            const distortionPass = new ShaderPass(DistortionShader);
+            distortionPass.uniforms['strength'].value = .165;
+            composer.addPass(distortionPass);
+        }
 
         const scanlinePass = new ShaderPass(ScanlineShader);
         scanlinePass.renderToScreen = true;
@@ -341,7 +381,7 @@ export function initScene() {
             requestAnimationFrame(animate);
             const delta = clock.getDelta();
             const elapsedTime = clock.getElapsedTime();
-            world.step(1 / 60, delta, 3);
+            world.step(1 / 60, delta, 3); 
             updateControls(delta);
             
 
@@ -358,6 +398,7 @@ export function initScene() {
             // Update screens that have update methods
             if (arcadeScreen && arcadeScreen.update) arcadeScreen.update();
             if (computerTerminalScreen && computerTerminalScreen.update) computerTerminalScreen.update();
+            if (computerWebsiteScreen && computerWebsiteScreen.update) computerWebsiteScreen.update();
         }
 
         animate();

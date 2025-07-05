@@ -1,0 +1,49 @@
+{
+  "/": {
+    "type": "directory",
+    "contents": {
+      "about.txt": {
+        "type": "file",
+        "content": "Nathan Perrier\nFull Stack Developer\n\nLocation: Brisbane, Australia\nEmail: contact@nathanperrier.dev\nGitHub: github.com/nathanperrier\n\nPassionate full stack developer that specialises in both app and web development. I enjoy designing unique experiences and utilising new technologies."
+      },
+      "contact.txt": {
+        "type": "file",
+        "content": "Contact Information\n==================\n\nEmail: contact@nathanperrier.dev\nGitHub: https://github.com/nathanperrier\nLinkedIn: https://linkedin.com/in/nathan-perrier23\nPhone: +61 401 737 213\n\nFeel free to reach out!"
+      },
+      "help.txt": {
+        "type": "file",
+        "content": "Available Commands:\n==================\n\nhelp     - Show this help message\nls       - List files and directories\ncat      - Display file contents (usage: cat <filename>)\ncd       - Change directory (usage: cd <directory>)\npwd      - Print working directory\nclear    - Clear terminal or history (usage: clear <terminal|history>)\nwhoami   - Display current user\ndate     - Show current date and time\necho     - Print text (usage: echo <text>)\n\nFun Commands:\nmatrix.exe   - Enter the Matrix (press Q to exit)\nsnake.exe    - Play Snake game\nbanner   - Display ASCII art banner\nneofetch - Show system information\ntheme    - Change terminal theme (usage: theme <name>)\n\nNavigation:\n- Use TAB for autocomplete\n- Use UP/DOWN arrows for command history\n- Type partial command and press TAB to complete"
+      },
+      "projects": {
+        "type": "directory",
+        "contents": {
+          "portfolio.txt": {
+            "type": "file",
+            "content": "Portfolio Website\n=================\n\nA personal portfolio that expands beond a traditional 2D site.\nIt is a 3D representation of my hobbies, skills, and projects.\nIt utilises THREE.js for 3D graphics and animations, providing an immersive experience.\n\nTechnologies:\n- Three.js/WebGL\n- HTML5/CSS3\n- JavaScript\n- Vite\n- NES.css\n- Blender\n\n\nFeatures:\n- Responsive design\n- Interactive 3D elements\n- Smooth animations\n- SEO optimized\n- Immersive Navigation\n- Game-like experience\n\nLive Demo: https://nathanperrier.dev\nGitHub: https://github.com/nathanperrier/portfolio"
+          },
+          "waypoint.txt": {
+            "type": "file",
+            "content": "Waypoint\n===================\n\nA web-based AR navigation app that helps users find their way around the UQ campus.\nIt uses AR.js for augmented reality features and integrates with Mapbox API for navigation.\n\nDesigned With Figma.\n2025 BFI Hackathon Contestant.\n\nTechnologies:\n- Frontend: Framework7, HTML5, CSS3, JavaScript\n- Backend: JavaScript, Mapbox API\n\nFeatures:\n- Augmented reality navigation\n- Real-time location tracking\n- Interactive map\n- Responsive design\n- User-friendly interface\n\nFigma Design: https://www.figma.com/design/293ut4QDPxDpbgxyqYjkgJ/waypoint?node-id=0-1&t=YP5OwvRdEvPU54Rh-1\nGitHub: https://github.com/nathanperrier/waypoint"
+          },
+          "moistmeter.txt": {
+            "type": "file",
+            "content": "MoistMeter\n===================\n\nAn agriculture app that helps farmers monitor soil moisture levels and optimize and automate irrigation.\n\n2025 SIC Hackathon Winner.\n\nTechnologies:\n- Flutter\n- Firebase\n- Mapbox API\n- Agrisense API\n\nGitHub: https://github.com/nathanperrier/moistmeter"
+          }
+        }
+      },
+      "skills": {
+        "type": "directory",
+        "contents": {
+          "frontend.txt": {
+            "type": "file",
+            "content": "Frontend Skills\n===============\n\nLanguages:\n- JavaScript \n- Flutter\n- HTML5\n- CSS3/SASS\n\nFrameworks:\n- React\n- Framework7\n\nTools:\n- Webpack/Vite\n- npm/yarn\n- Git\n- Visual Studio Code\n- Figma\n- Blender\n- Tailwind CSS\n- Bootstrap\n- Flowbite\n\nTesting:\n- LightHouse\n- devtools\n- React Testing Library"
+          },
+          "backend.txt": {
+            "type": "file",
+            "content": "Backend Skills\n==============\n\nLanguages:\n- Node.js\n- Python\n- C\n\nFrameworks:\n- Django\n- Flask\n\nDatabases:\n- MySQL\n- SQLite (SQLAlchemy, Flask-SQLAlchemy)\n\nAPIs:\n- REST (FastAPI, Flask, Django)\n- WebSockets"
+          }
+        }
+      }
+    }
+  }
+}

@@ -86,7 +86,31 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
                     audioManager.playSound('button_hover', 0.2);
                 }
                 lastIntersected = selectedObject;
+                
+                // Start rendering computer screens when hovering over them
+                if (selectedObject.name.toLowerCase().includes('computerterminal_interactive')) {
+                    if (selectedObject.userData.computerTerminalScreen) {
+                        selectedObject.userData.computerTerminalScreen.show();
+                    }
+                } else if (selectedObject.name.toLowerCase().includes('computerwebsite_interactive')) {
+                    if (selectedObject.userData.websiteScreen) {
+                        selectedObject.userData.websiteScreen.show();
+                    }
+                }
             }
+        } else {
+            // Hide computer screens when not looking at them (optional - comment out if you want them to stay on)
+            interactiveObjects.forEach(obj => {
+                if (obj.name.toLowerCase().includes('computerterminal_interactive')) {
+                    if (obj.userData.computerTerminalScreen && obj !== repositionedObject) {
+                        obj.userData.computerTerminalScreen.hide();
+                    }
+                } else if (obj.name.toLowerCase().includes('computerwebsite_interactive')) {
+                    if (obj.userData.websiteScreen && obj !== repositionedObject) {
+                        obj.userData.websiteScreen.hide();
+                    }
+                }
+            });
         }
     }
 
@@ -307,6 +331,20 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
                 if (repositionedObject && cleanString(repositionedObject.name) === 'arcade_interactive') {
                     if (repositionedObject.userData.arcadeScreen) {
                         repositionedObject.userData.arcadeScreen.hide();
+                    }
+                }
+                
+                // Deactivate computer terminal input if it was open
+                if (repositionedObject && cleanString(repositionedObject.name) === 'computerTerminal_interactive') {
+                    if (repositionedObject.userData.computerTerminalScreen) {
+                        repositionedObject.userData.computerTerminalScreen.deactivateInput();
+                    }
+                }
+                
+                // Deactivate computer website mouse if it was open
+                if (repositionedObject && cleanString(repositionedObject.name) === 'computerWebsite_interactive') {
+                    if (repositionedObject.userData.websiteScreen) {
+                        repositionedObject.userData.websiteScreen.deactivateMouse();
                     }
                 }
                 

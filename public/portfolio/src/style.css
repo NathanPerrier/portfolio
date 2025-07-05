@@ -1,0 +1,310 @@
+/* Loading screen styles */
+.loading-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgb(53, 58, 63);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.loading-content {
+  text-align: center;
+  width: 300px;
+}
+
+.loading-text {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 1.2rem;
+  color: #fff;
+  margin-bottom: 2rem;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  0%, 50% { opacity: 1; }
+  51%, 100% { opacity: 0; }
+}
+
+.loading-container .nes-progress {
+  width: 100%;
+  height: 30px;
+}
+
+:root {
+  font-family: 'Press Start 2P', cursive;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: #dddddd;
+  background-color: rgb(53, 58, 63);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  display: block;
+  background-color: rgb(53, 58, 63);
+}
+
+#app {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  background-color: rgb(53, 58, 63);
+}
+
+
+/* Override NES.css default font for better readability in paragraphs */
+p, li {
+  font-family: Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+/* Headers should keep the retro font */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Press Start 2P', cursive;
+}
+
+/* Section spacing */
+section {
+  margin: 2rem 0;
+}
+
+/* Navigation styling */
+nav.nes-container {
+  margin-bottom: 3rem !important;
+  text-align: center;
+  padding: 1rem;
+  border-color: #fff;
+}
+
+nav .nes-btn {
+  margin: 0.5rem;
+}
+
+/* Header styling */
+header.nes-container {
+  text-align: center;
+  margin-bottom: 0rem !important;
+}
+
+header h1 {
+  font-size: 2rem;
+}
+
+section.nes-container {
+  border-color: #fff;
+  margin: 1rem 0 !important;
+}
+
+header p {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.8rem;
+}
+
+#about.nes-container {
+  height: fit-content;
+  padding-bottom: 5rem !important;
+  overflow: visible;
+}
+
+#about .nes-balloon p {
+  color: #212529 !important;
+}
+
+.nes-avatar {
+  position: relative;
+  z-index: 1;
+}
+
+.nes-avatar img {
+  max-height: 100px;
+  width: auto;
+}
+
+/* Skills grid */
+.skills-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.skills-grid .nes-badge {
+  margin: 0.5rem;
+}
+
+
+/* Project cards */
+.project-card {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+}
+
+.project-card h3 {
+  font-size: 1rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.project-tech {
+  margin: 1rem 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.project-tech .nes-badge {
+  font-size: 0.7rem;
+}
+
+.project-links {
+  margin-top: 1rem;
+  display: flex;
+  gap: 1rem;
+}
+
+/* Experience items */
+.experience-item {
+  margin-bottom: 2rem;
+  padding-bottom: 2rem;
+  border-bottom: 3px dashed #ccc;
+}
+
+.experience-item:last-child {
+  border-bottom: none;
+}
+
+.experience-item h3 {
+  font-size: 0.9rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Fix for list styling */
+.experience-item .nes-list {
+  margin-top: 1rem;
+}
+
+.experience-item .nes-list li {
+  margin-bottom: 0.5rem;
+}
+
+/* Education items */
+.education-item {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+}
+
+.education-item h3 {
+  font-size: 0.9rem;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Contact section */
+#contact.nes-container {
+  margin-top: 3rem !important;
+  margin-bottom: 0 !important;
+}
+
+.contact-links {
+  margin-top: 2rem;
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+/* Footer */
+footer {
+  margin-top: 0;
+  text-align: center;
+  padding: 2rem;
+}
+
+footer p {
+  font-family: 'Press Start 2P', cursive;
+  font-size: 0.7rem;
+}
+
+.title {
+  background-color: none;
+  color: var(--color)
+}
+
+.nes-badge .is-dark {
+  mix-blend-mode: difference;
+  color: rgb(255, 255, 255);
+}
+
+
+
+/* Responsive design */
+@media (max-width: 768px) {
+  #app {
+    padding: 1rem;
+  }
+  
+  header h1 {
+    font-size: 1.5rem;
+  }
+  
+  nav .nes-btn {
+    font-size: 0.7rem;
+    padding: 0.5rem;
+    margin: 0.25rem;
+  }
+  
+  .project-links {
+    flex-direction: column;
+  }
+  
+  .contact-links {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
+/* Dark mode support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color: #f8f9fa;
+    background-color: #212529;
+  }
+  
+  .nes-container:not(.is-dark) {
+    background-color: #343a40;
+    color: #f8f9fa;
+  }
+  
+  .experience-item {
+    border-bottom-color: #495057;
+  }
+}

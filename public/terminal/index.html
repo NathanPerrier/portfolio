@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <!-- icon -->
+    <link rel="icon" href="/assets/icons/icon-iOS-TintedDark-1024x1024@2x.png" type="image/png">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>Nathan Perrier</title>
+
+    <META NAME="geo.position" CONTENT="27.4705; 153.0260">
+    <META NAME="geo.placename" CONTENT="Australia">
+    <META NAME="geo.region" CONTENT="07">
+
+    <meta name="description" content="Nathan Perrier's portfolio project, describing my skills, projects, and experience as a full stack developer.">
+    <meta name="keywords" content="Nathan Perrier, portfolio, developer, full stack">
+    <meta name="author" content="Nathan Perrier">
+
+    <meta itemprop="name" content="Nathan Perrier's Portfolio">
+    <meta itemprop="description" content="Nathan Perrier's portfolio project, describing my skills, projects, and experience as a full stack developer.">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Nathan Perrier">
+
+    <link href="https://fonts.googleapis.com/css?family=Press+Start+2P" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/terminal.css@0.7.5/dist/terminal.min.css" />
+    <link rel="stylesheet" type="text/css" href="/terminal/src/style.css" />
+  </head>
+  <body>
+    <!-- Loading Screen -->
+    <div id="loader" class="loader-container">
+      <div class="progress-bar">
+        <div class="progress-fill"></div>
+      </div>
+    </div>
+    
+    <div id="app">
+      <div class="terminal" id="terminal">
+        <div class="terminal-header">
+          <div class="terminal-title">nathan@portfolio:~$</div>
+        </div>
+        <div class="terminal-body" id="terminal-body">
+          <div class="terminal-output" id="terminal-output">
+            <div class="welcome-message">
+              <pre id="welcome-text">
+═══════════════════════════════════════════════════════════════════════════════════════════
+
+           Welcome to Nathan Perrier's Terminal                                             
+                                                                                            
+  Type 'help' for available commands                                                        
+  Type 'ls' to list files and directories                                                   
+                                                                                            
+  GitHub: github.com/nathanperrier                                                   
+        
+═══════════════════════════════════════════════════════════════════════════════════════════
+              </pre>
+            </div>
+          </div>
+          <div class="terminal-input-line">
+            <span class="terminal-prompt">nathan@portfolio:~$ </span>
+            <input type="text" id="terminal-input" class="terminal-input" autofocus autocomplete="off" />
+          </div>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/terminal/src/main.js"></script>
+  </body>
+</html>

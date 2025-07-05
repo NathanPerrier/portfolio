@@ -12,6 +12,8 @@ export const objectProperties = {
     action: (object) => {
       if (object.userData.computerTerminalScreen) {
         object.userData.computerTerminalScreen.show();
+        // Schedule keyboard input activation after a short delay
+        object.userData.computerTerminalScreen.scheduleActivation(500);
         analytics.trackInteraction('computer_terminal', 'view_test');
       }
     }
@@ -22,7 +24,7 @@ export const objectProperties = {
     lookAt: { x: -5.25, y: 5, z: -5 }, 
     action: (object) => {
       if (object.userData.websiteScreen) {
-        object.userData.websiteScreen.show();
+        object.userData.websiteScreen.activateMouse();
         analytics.trackInteraction('computer_website', 'view_portfolio');
       }
     }

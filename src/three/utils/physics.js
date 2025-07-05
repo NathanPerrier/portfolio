@@ -6,6 +6,12 @@ export function initPhysics() {
     const world = new CANNON.World({
         gravity: new CANNON.Vec3(0, -9.82, 0),
     });
+    
+    // Optimize physics performance
+    world.broadphase = new CANNON.SAPBroadphase(world);
+    world.solver.iterations = 5; // Reduced from default 10
+    world.defaultContactMaterial.contactEquationStiffness = 1e6;
+    world.defaultContactMaterial.contactEquationRelaxation = 3;
 
     const groundBody = new CANNON.Body({
         type: CANNON.Body.STATIC,
