@@ -24,6 +24,7 @@ export const objectProperties = {
     lookAt: { x: -5.25, y: 5, z: -5 }, 
     action: (object) => {
       if (object.userData.websiteScreen) {
+        object.userData.websiteScreen.show();
         object.userData.websiteScreen.activateMouse();
         analytics.trackInteraction('computer_website', 'view_portfolio');
       }

@@ -131,8 +131,7 @@ export class ComputerTexture {
             this.createInputProxy();
         }
         
-        // Always show the screen
-        this.show();
+        this.renderIframeToCanvas();
     }
     
     createIframe() {
@@ -154,11 +153,34 @@ export class ComputerTexture {
         document.body.appendChild(this.iframe);
     }
     
+    startPreviewMode() {
+        // Clear any existing intervals
+        if (this.previewInterval) {
+            clearInterval(this.previewInterval);
+        }
+        if (this.updateInterval) {
+            cancelAnimationFrame(this.updateInterval);
+        }
+        
+        // Initial render
+        this.renderIframeToCanvas();
+        
+        // Update every 10 seconds in preview mode
+        this.previewInterval = setInterval(() => {
+            if (this.isActive && !this.isInputActive && !this.isMouseActive) {
+                this.renderIframeToCanvas();
+            }
+        }, 10000000);
+    }
     
     startRendering() {
-        // Clear any existing interval
+        // Clear any existing intervals
+        if (this.previewInterval) {
+            clearInterval(this.previewInterval);
+            this.previewInterval = null;
+        }
         if (this.updateInterval) {
-            clearInterval(this.updateInterval);
+            cancelAnimationFrame(this.updateInterval);
         }
         
         // Use requestAnimationFrame with throttling instead of setInterval
@@ -166,8 +188,8 @@ export class ComputerTexture {
             const now = performance.now();
             const timeSinceLastRender = now - this.lastRenderTime;
             
-            // Only render if enough time has passed (2 FPS = 500ms)
-            if (timeSinceLastRender >= 500) {
+            // Only render if enough time has passed
+            if (timeSinceLastRender >= 100) {
                 this.renderIframeToCanvas();
                 this.lastRenderTime = now;
             }
@@ -271,21 +293,9 @@ export class ComputerTexture {
         if (this.isActive) return;
         
         this.isActive = true;
-        
-        // Render one frame immediately for preview
-        this.renderIframeToCanvas();
-        
-        // Delay start of continuous rendering for better initial load performance
-        setTimeout(() => {
-            if (this.isActive) {
-                // Clear preview interval
-                if (this.previewInterval) {
-                    clearInterval(this.previewInterval);
-                    this.previewInterval = null;
-                }
-                this.startRendering();
-            }
-        }, 10000);
+
+        // Start preview mode with 10-second updates
+        this.startPreviewMode();
     }
 
     activateMouse() {
@@ -302,6 +312,11 @@ export class ComputerTexture {
         }
         
         this.isMouseActive = true;
+        
+        // Switch to full rendering mode when mouse is activated
+        if (this.isActive) {
+            this.startRendering();
+        }
     }
 
     deactivateMouse() {
@@ -318,6 +333,11 @@ export class ComputerTexture {
         }
         
         this.isMouseActive = false;
+        
+        // Switch back to preview mode if still active but no input is active
+        if (this.isActive && !this.isInputActive) {
+            this.startPreviewMode();
+        }
     }
     
     hide() {
@@ -376,6 +396,11 @@ export class ComputerTexture {
         
         // Remove keyboard listeners properly
         this.removeKeyboardHandlers();
+        
+        // Switch back to preview mode if still active but no mouse is active
+        if (this.isActive && !this.isMouseActive) {
+            this.startPreviewMode();
+        }
     }
     
     createInputProxy() {
@@ -479,6 +504,11 @@ export class ComputerTexture {
         // Send activation message to iframe
         if (this.iframe && this.iframe.contentWindow) {
             this.iframe.contentWindow.postMessage('activate', '*');
+        }
+        
+        // Switch to full rendering mode when input is activated
+        if (this.isActive) {
+            this.startRendering();
         }
     }
     
