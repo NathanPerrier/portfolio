@@ -2,7 +2,7 @@
     position: fixed;
     width: 30px;
     height: 30px;
-    background-image: url('/assets/cursor/cursor.png');
+    background-image: url(/assets/cursor/cursor.png);
     background-size: contain;
     pointer-events: none;
     z-index: 999;
@@ -10,5 +10,5 @@
 }
 
 .custom-cursor.clicking {
-    background-image: url('/assets/cursor/cursor-click.png');
+    background-image: url(/assets/cursor/cursor-click.png);
 }
