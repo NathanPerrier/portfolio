@@ -52,7 +52,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const timeoutDialog = document.getElementById('timeout-ui');
         const uiContainer = document.getElementById('ui-container');
 
-        const timeoutDuration = 30000; // 10 seconds
+        const timeoutDuration = 55000; // 55 seconds
         const timeout = setTimeout(() => {    
             timeoutDialog.style.display = 'flex';
         }, timeoutDuration);
