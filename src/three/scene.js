@@ -240,16 +240,16 @@ export function initScene() {
                         computerTerminalScreen.init(node);
                         node.userData.computerTerminalScreen = computerTerminalScreen;
                         updateLoadingText('Computer terminal screen initialized.');
-                        // Don't start rendering immediately
-                        computerTerminalScreen.hide();
+                        // Start in preview mode (10 second updates)
+                        computerTerminalScreen.show();
                     }
 
                     if (node.name.toLowerCase().includes('computerwebsite_interactive')) {
                         computerWebsiteScreen.init(node);
                         node.userData.websiteScreen = computerWebsiteScreen;
                         updateLoadingText('Computer website screen initialized.');
-                        // Don't start rendering immediately
-                        computerWebsiteScreen.hide();
+                        // Start in preview mode (10 second updates)
+                        computerWebsiteScreen.show();
                     }
                 }
             }
@@ -295,13 +295,14 @@ export function initScene() {
         composer.addPass(scanlinePass);
 
         // Create interaction handler first
-        const interactionHandler = createInteractionHandler(camera, interactiveObjects, null, audioManager);
+        const interactionHandler = createInteractionHandler(camera, interactiveObjects, null, audioManager, renderer);
         
         // Create controls with interaction handler
         const { controls, update: updateControls } = createControls(camera, renderer, playerBody, interactiveObjects, interactionHandler);
         
-        // Update interaction handler with controls reference
+        // Update interaction handler with controls and renderer reference
         interactionHandler.setControls(controls);
+        interactionHandler.setRenderer(renderer);
         
         // Count interactive objects and notify HUD manager
         if (hudManager) {

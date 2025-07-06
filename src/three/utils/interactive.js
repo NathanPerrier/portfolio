@@ -4,7 +4,7 @@ import { objectProperties } from './objectProperties.js';
 import { cleanString } from '../../utils/string.js';
 import { whiteboardManager } from '../../utils/whiteboard.js';
 
-export function createInteractionHandler(camera, interactiveObjects, controls, audioManager = null) {
+export function createInteractionHandler(camera, interactiveObjects, controls, audioManager = null, renderer = null) {
     const raycaster = new THREE.Raycaster();
     let lastIntersected = null;
     let isRepositioned = false;
@@ -13,6 +13,7 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
     let controlsRef = controls;
     let wasControlsUnlocked = !controls || !controls.isLocked;
     let windowFocusDebounceTimeout = null;
+    let rendererRef = renderer;
     
     const originalCameraState = {
         position: new THREE.Vector3(),
@@ -98,20 +99,7 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
                     }
                 }
             }
-        } else {
-            // Hide computer screens when not looking at them (optional - comment out if you want them to stay on)
-            interactiveObjects.forEach(obj => {
-                if (obj.name.toLowerCase().includes('computerterminal_interactive')) {
-                    if (obj.userData.computerTerminalScreen && obj !== repositionedObject) {
-                        obj.userData.computerTerminalScreen.hide();
-                    }
-                } else if (obj.name.toLowerCase().includes('computerwebsite_interactive')) {
-                    if (obj.userData.websiteScreen && obj !== repositionedObject) {
-                        obj.userData.websiteScreen.hide();
-                    }
-                }
-            });
-        }
+        } 
     }
 
     function calculateRepositionPoint(object) {
@@ -254,7 +242,7 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
                 // object action
                 const properties = objectProperties[cleanString(repositionedObject.name)];
                 if (properties && properties.action) {
-                    properties.action(repositionedObject, camera);
+                    properties.action(repositionedObject, camera, rendererRef);
                 }
             }
         }
@@ -344,7 +332,7 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
                 // Deactivate computer website mouse if it was open
                 if (repositionedObject && cleanString(repositionedObject.name) === 'computerWebsite_interactive') {
                     if (repositionedObject.userData.websiteScreen) {
-                        repositionedObject.userData.websiteScreen.deactivateMouse();
+                        repositionedObject.userData.websiteScreen.deactivateMouse(rendererRef);
                     }
                 }
                 
@@ -447,6 +435,10 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
         }
     }
 
+    function setRenderer(newRenderer) {
+        rendererRef = newRenderer;
+    }
+
     return { 
         update, 
         onClick, 
@@ -454,6 +446,7 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
         isAnimating: () => isAnimating,
         navigateToObject,
         returnToOriginalPosition,
-        setControls
+        setControls,
+        setRenderer
     };
 }

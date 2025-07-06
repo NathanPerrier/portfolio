@@ -30,6 +30,7 @@ export class ComputerTexture {
         this.isInputActive = false;
         this.isMouseActive = false;
         this.mouseOverlay = null;
+        this.mouseContainer = null;
         this.isRendering = false;
         this.lastRenderTime = 0;
         this.renderQueue = false;
@@ -298,17 +299,101 @@ export class ComputerTexture {
         this.startPreviewMode();
     }
 
+    createMouseContainer() {
+        if (this.mouseContainer) return;
+        
+        // Create the mouse container overlay
+        this.mouseContainer = document.getElementById('mouse-container');
+        this.mouseContainer.style.position = 'absolute';
+        this.mouseContainer.style.opacity = '0';
+        this.mouseContainer.style.zIndex = '999';
+        this.mouseContainer.style.backgroundColor = '#000';
+        this.mouseContainer.style.cursor = 'none';
+        this.mouseContainer.style.display = 'none'; // Initially hidden
+        this.mouseContainer.style.pointerEvents = 'auto';
+        
+        // Add event listeners to forward events to iframe
+        this.mouseContainer.addEventListener('click', (e) => {
+            if (!this.iframe || !this.iframe.contentWindow) return;
+            
+            const rect = this.mouseContainer.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Calculate position relative to iframe dimensions
+            const scaleX = this.config.width / rect.width;
+            const scaleY = this.config.height / rect.height;
+            
+            const iframeX = x * scaleX;
+            const iframeY = y * scaleY;
+            
+            // Send click event to iframe
+            this.iframe.contentWindow.postMessage({
+                type: 'click',
+                x: iframeX,
+                y: iframeY
+            }, '*');
+        });
+        
+        this.mouseContainer.addEventListener('mousemove', (e) => {
+            if (!this.iframe || !this.iframe.contentWindow) return;
+            
+            const rect = this.mouseContainer.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Calculate position relative to iframe dimensions
+            const scaleX = this.config.width / rect.width;
+            const scaleY = this.config.height / rect.height;
+            
+            const iframeX = x * scaleX;
+            const iframeY = y * scaleY;
+            
+            // Send mousemove event to iframe
+            this.iframe.contentWindow.postMessage({
+                type: 'mousemove',
+                x: iframeX,
+                y: iframeY
+            }, '*');
+        });
+        
+        this.mouseContainer.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            if (!this.iframe || !this.iframe.contentWindow) return;
+            
+            // Get current scroll position and apply scroll
+            const currentY = this.iframe.contentWindow.scrollY || 0;
+            this.iframe.contentWindow.scrollTo(0, currentY + e.deltaY);
+            
+            // Force re-render after scroll
+            if (this.isActive) {
+                this.renderIframeToCanvas();
+            }
+        }, { passive: false });
+        
+        document.body.appendChild(this.mouseContainer);
+    }
+    
     activateMouse() {
         if (!this.config.enableMouse) return;
+        
+        // Create mouse container if it doesn't exist
+        if (!this.mouseContainer) {
+            this.createMouseContainer();
+        }
 
-        // Make iframe visible for interaction but transparent
-        if (this.iframe) {
-            this.iframe.style.pointerEvents = 'auto';
-            
-            // Send message to iframe content
-            if (this.iframe.contentWindow) {
-                this.iframe.contentWindow.postMessage('activateMouse', '*');
-            }
+        // Position and size the mouse container to match the iframe
+        this.mouseContainer.style.width = this.config.width/1.775 + 'px';
+        this.mouseContainer.style.height = this.config.height/1.74 + 'px';
+        // center div
+        this.mouseContainer.style.left = '50%';
+        this.mouseContainer.style.transform = 'translateX(-47.5%)';
+        this.mouseContainer.style.top = '25vh';
+        this.mouseContainer.style.display = 'flex';
+        
+        // Send message to iframe content
+        if (this.iframe && this.iframe.contentWindow) {
+            this.iframe.contentWindow.postMessage('activateMouse', '*');
         }
         
         this.isMouseActive = true;
@@ -322,14 +407,14 @@ export class ComputerTexture {
     deactivateMouse() {
         if (!this.config.enableMouse) return;
 
-        // Hide iframe again
-        if (this.iframe) {
-            this.iframe.style.pointerEvents = 'none';
-            
-            // Send message to iframe content
-            if (this.iframe.contentWindow) {
-                this.iframe.contentWindow.postMessage('deactivateMouse', '*');
-            }
+        // Hide mouse container
+        if (this.mouseContainer) {
+            this.mouseContainer.style.display = 'none';
+        }
+        
+        // Send message to iframe content
+        if (this.iframe && this.iframe.contentWindow) {
+            this.iframe.contentWindow.postMessage('deactivateMouse', '*');
         }
         
         this.isMouseActive = false;
@@ -551,6 +636,10 @@ export class ComputerTexture {
         
         if (this.iframe && this.iframe.parentNode) {
             this.iframe.parentNode.removeChild(this.iframe);
+        }
+        
+        if (this.mouseContainer && this.mouseContainer.parentNode) {
+            this.mouseContainer.parentNode.removeChild(this.mouseContainer);
         }
         
         if (this.texture) {
