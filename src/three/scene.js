@@ -5,6 +5,7 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { addLights } from './utils/lights.js';
 import { createControls } from './utils/controls.js';
 import { initPhysics, createPlayerPhysics, createObjectPhysics, createDebugger } from './utils/physics.js';
@@ -126,6 +127,13 @@ export function initScene() {
         updateLoadingText('CSS3D renderer created.');
 
         const loader = new GLTFLoader(loadingManager);
+        
+        // Set up Draco decoder for compressed models
+        const dracoLoader = new DRACOLoader();
+        dracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+        dracoLoader.setDecoderConfig({ type: 'js' });
+        loader.setDRACOLoader(dracoLoader);
+        
         updateLoadingText('Asset loader created.');
         
         // Load sound effects
@@ -191,7 +199,7 @@ export function initScene() {
             resolve(sceneAPI);
         };
 
-        loader.load(import.meta.env.BASE_URL + 'assets/3d/room/room.glb', function (gltf) {
+        loader.load(import.meta.env.BASE_URL + 'assets/3d/room/room-optimized-no-draco.glb', function (gltf) {
           const model = gltf.scene;
           model.traverse(function (node) {
             if (node.isMesh) {
