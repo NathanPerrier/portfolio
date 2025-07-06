@@ -129,13 +129,12 @@ export function initScene() {
         
         updateLoadingText('Asset loader created.');
         
+        updateLoadingText('This may take a moment...'); 
+
         // Load sound effects
-        audioManager.loadEffectSounds().then(() => {
+        audioManager.loadEffectSounds().then(() => {  //! or this??
             updateLoadingText('Sound effects loaded.');
         });
-
-        updateLoadingText('Creating player physics body...');
-        updateLoadingText('This may take a moment...');
 
         const playerBody = createPlayerPhysics(world);  //! Causing long load times
         updateLoadingText('Player physics body created.');
