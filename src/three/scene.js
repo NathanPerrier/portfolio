@@ -5,6 +5,7 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { addLights } from './utils/lights.js';
 import { createControls } from './utils/controls.js';
 import { initPhysics, createPlayerPhysics, createObjectPhysics, createDebugger } from './utils/physics.js';
@@ -127,17 +128,22 @@ export function initScene() {
 
         const loader = new GLTFLoader(loadingManager);
         
-        updateLoadingText('Asset loader created.');
+        // Setup DRACO loader for compressed models
+        const dracoLoader = new DRACOLoader();
+        dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
+        loader.setDRACOLoader(dracoLoader);
         
-        updateLoadingText('This may take a moment...'); 
+        updateLoadingText('Asset loader created.');
 
         // Load sound effects
-        audioManager.loadEffectSounds().then(() => {  //! or this??
+        audioManager.loadEffectSounds().then(() => {  
             updateLoadingText('Sound effects loaded.');
         });
 
-        const playerBody = createPlayerPhysics(world);  //! Causing long load times
+        const playerBody = createPlayerPhysics(world);  
         updateLoadingText('Player physics body created.');
+
+        updateLoadingText('This may take a moment...'); 
 
         const interactiveObjects = [];
         const arcadeScreen = new ArcadeScreenTexture();
@@ -194,7 +200,7 @@ export function initScene() {
             resolve(sceneAPI);
         };
 
-        loader.load(import.meta.env.BASE_URL + 'assets/3d/room/room.glb', function (gltf) {
+        loader.load(import.meta.env.BASE_URL + 'assets/3d/room/room-optimized.glb', function (gltf) {
           const model = gltf.scene;
           model.traverse(function (node) {
             if (node.isMesh) {

@@ -28,5 +28,5 @@ dist-ssr
 *.blend
 *.blend1
 
-# claude
-CLAUDE.md
+# large glb file
+room.glb
