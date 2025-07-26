@@ -21,7 +21,7 @@ You need to have Node.js and npm installed.
 
 ### Installation
 
-1. Clone the repo: `git clone https://github.com/your_username_/your_repository.git`
+1. Clone the repo: `git clone https://github.com/nathanperrier/portfolio.git`
 2. Install NPM packages: `npm install`
 3. Run the development server: `npm run dev`
 
