@@ -1,6 +1,6 @@
 # 3D Portfolio
 
-An interactive 3D portfolio website built with Three.js and Vite.
+An interactive 3D portfolio website built with Three.js and Vite. Scene designed and modeled with Blender.
 
 [![Three.js](https://img.shields.io/badge/Three.js-black?style=for-the-badge&logo=three.js)](https://threejs.org/)
 [![Vite](https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite&logoColor=white)](https://vitejs.dev/)
