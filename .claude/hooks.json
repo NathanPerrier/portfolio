@@ -1,0 +1,14 @@
+{
+  "PostToolUse": [
+    {
+      "matcher": "Edit",
+      "hooks": [
+        {
+          "type": "command",
+          "command": "grep -l 'new THREE\\.' --include='*.js' src/ || true",
+          "timeout": 3000
+        }
+      ]
+    }
+  ]
+}
