@@ -16,6 +16,7 @@ import { DistortionShader } from './utils/distortionShader.js';
 import { ScanlineShader } from './utils/scanlineShader.js';
 import { device } from '../utils/device.js';
 import { getAudioManager } from '../utils/AudioManager.js';
+import { createAmbientParticles, updateAmbientParticles, disposeAmbientParticles } from './utils/ambientParticles.js';
 import { analytics } from '../utils/analytics.js';
 import { ArcadeScreenTexture } from './utils/arcadeScreenTexture.js';
 import { TVGifTexture } from './utils/tvGifTexture.js';
@@ -145,6 +146,7 @@ export function initScene() {
 
         updateLoadingText('This may take a moment...'); 
 
+        let ambientParticles = null;
         const interactiveObjects = [];
         const arcadeScreen = new ArcadeScreenTexture();
         const tvScreen = new TVGifTexture();
@@ -270,6 +272,7 @@ export function initScene() {
             }
           });
           scene.add(model);
+          ambientParticles = createAmbientParticles(scene);
           renderer.compile(scene, camera);
           updateLoadingText('Room loaded.');
           
@@ -288,7 +291,7 @@ export function initScene() {
             window.innerWidth / 2,  // Half resolution
             window.innerHeight / 2
         );
-        const bloomPass = new UnrealBloomPass(bloomResolution, .2, 0.4, 0.85);
+        const bloomPass = new UnrealBloomPass(bloomResolution, 0.4, 0.6, 0.85);
         composer.addPass(bloomPass);
 
         // Optional: disable distortion for performance
@@ -399,6 +402,7 @@ export function initScene() {
             // cannonDebugger.update();
 
             interactionHandler.update();
+            updateAmbientParticles(ambientParticles);
 
             scanlinePass.uniforms.time.value = elapsedTime;
 

@@ -363,7 +363,7 @@ export class ComputerTexture {
             
             // Get current scroll position and apply scroll
             const currentY = this.iframe.contentWindow.scrollY || 0;
-            this.iframe.contentWindow.scrollTo(0, currentY + e.deltaY);
+            this.iframe.contentWindow.scrollTo(0, currentY - e.deltaY);
             
             // Force re-render after scroll
             if (this.isActive) {
