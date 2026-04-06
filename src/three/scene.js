@@ -291,7 +291,7 @@ export function initScene() {
             window.innerWidth / 2,  // Half resolution
             window.innerHeight / 2
         );
-        const bloomPass = new UnrealBloomPass(bloomResolution, 0.4, 0.6, 0.85);
+        const bloomPass = new UnrealBloomPass(bloomResolution, 0.25, 0.4, 0.85);
         composer.addPass(bloomPass);
 
         // Optional: disable distortion for performance
