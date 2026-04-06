@@ -27,8 +27,8 @@ export class ArcadeGame {
             x: 0,
             y: 0,
             radius: 4,
-            vx: 1.5,
-            vy: -1.5,
+            vx: 1.0,
+            vy: -1.0,
             color: '#FFFFFF'
         };
         
@@ -94,6 +94,10 @@ export class ArcadeGame {
                 this.start();
                 e.preventDefault();
                 e.stopPropagation();
+            } else if (e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                window.dispatchEvent(new CustomEvent('arcade-exit-game'));
             }
         };
         
@@ -137,8 +141,8 @@ export class ArcadeGame {
     resetBall() {
         this.ball.x = this.canvas.width / 2;
         this.ball.y = this.paddle.y - 10;
-        this.ball.vx = 1.5 * (Math.random() > 0.5 ? 1 : -1);
-        this.ball.vy = -1.5;
+        this.ball.vx = 1.0 * (Math.random() > 0.5 ? 1 : -1);
+        this.ball.vy = -1.0;
     }
     
     createBricks() {
@@ -170,10 +174,13 @@ export class ArcadeGame {
         if (this.animationId) {
             cancelAnimationFrame(this.animationId);
         }
-        
+
         // Reset keys state
         this.keys.left = false;
         this.keys.right = false;
+
+        if (this.keydownHandler) document.removeEventListener('keydown', this.keydownHandler);
+        if (this.keyupHandler) document.removeEventListener('keyup', this.keyupHandler);
     }
     
     gameLoop() {

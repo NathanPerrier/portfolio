@@ -45,6 +45,11 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
         });
     }
     
+    // Arcade menu Escape → same as back button
+    window.addEventListener('arcade-go-back', () => {
+        returnToOriginalPosition();
+    });
+
     // Add window focus event listener for external link debounce
     window.addEventListener('focus', () => {
         // Set debounce when window regains focus (user returns from external link)
