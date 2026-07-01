@@ -7,6 +7,7 @@ const tiers = {
     high: {
         pixelRatioCap: 2,
         antialias: true,
+        exposure: 0.45,
         shadows: true,
         shadowMapSize: 512,
         bloom: true,
@@ -19,6 +20,8 @@ const tiers = {
     mobile: {
         pixelRatioCap: 1.5,
         antialias: false,
+        // Higher exposure compensates for the missing bloom pass brightness
+        exposure: 0.65,
         // Shadows stay on: the room's point lights are very bright and the
         // dark look depends on shadow occlusion - disabling them washes out
         // the whole scene. Smaller maps keep the cost down.

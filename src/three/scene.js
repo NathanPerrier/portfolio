@@ -112,7 +112,7 @@ export function initScene() {
         renderer.shadowMap.type = THREE.PCFShadowMap; // Less expensive than PCFSoftShadowMap
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
-        renderer.toneMappingExposure =  .45;
+        renderer.toneMappingExposure = quality.exposure;
 
         // Limit pixel ratio for performance
         const pixelRatio = Math.min(window.devicePixelRatio, quality.pixelRatioCap);

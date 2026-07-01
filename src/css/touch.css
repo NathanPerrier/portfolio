@@ -21,11 +21,12 @@ body.input-touch .custom-cursor {
 #joystick-zone {
   display: none;
   position: fixed;
-  left: calc(24px + env(safe-area-inset-left));
-  bottom: calc(24px + env(safe-area-inset-bottom));
+  /* Inset past the CRT bezel art (#frame spans the viewport, z-index 101) */
+  left: calc(7vw + env(safe-area-inset-left));
+  bottom: calc(7vh + env(safe-area-inset-bottom));
   width: 140px;
   height: 140px;
-  z-index: 12;
+  z-index: 102;
   touch-action: none;
 }
 
