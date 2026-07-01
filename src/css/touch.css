@@ -21,9 +21,10 @@ body.input-touch .custom-cursor {
 #joystick-zone {
   display: none;
   position: fixed;
-  /* Inset past the CRT bezel art (#frame spans the viewport, z-index 101) */
+  /* Inset past the CRT bezel art (#frame spans the viewport, z-index 101)
+     and clear the bottom navbar (bottom: 15% + its height) */
   left: calc(7vw + env(safe-area-inset-left));
-  bottom: calc(7vh + env(safe-area-inset-bottom));
+  bottom: calc(max(8vh, 15% + 72px) + env(safe-area-inset-bottom));
   width: 140px;
   height: 140px;
   z-index: 102;

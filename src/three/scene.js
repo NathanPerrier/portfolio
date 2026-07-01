@@ -6,7 +6,7 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js';
-import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
+import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { addLights } from './utils/lights.js';
 import { createControls } from './utils/controls.js';
 import { createTouchControls } from './utils/touchControls.js';
@@ -137,7 +137,11 @@ export function initScene() {
             .setTranscoderPath(import.meta.env.BASE_URL + 'basis/')
             .detectSupport(renderer);
         loader.setKTX2Loader(ktx2Loader);
-        loader.setMeshoptDecoder(MeshoptDecoder);
+
+        // DRACO geometry, decoded locally (no CDN dependency)
+        const dracoLoader = new DRACOLoader();
+        dracoLoader.setDecoderPath(import.meta.env.BASE_URL + 'draco/');
+        loader.setDRACOLoader(dracoLoader);
 
         updateLoadingText('Asset loader created.');
 
@@ -278,6 +282,7 @@ export function initScene() {
           ambientParticles = createAmbientParticles(scene);
           renderer.compile(scene, camera);
           ktx2Loader.dispose(); // Free transcoder workers once textures are decoded
+          dracoLoader.dispose();
           updateLoadingText('Room loaded.');
           
         }, undefined, function (error) {
