@@ -4,6 +4,7 @@ import BotDetector from "device-detector-js/dist/parsers/bot";
 
 const hasTouch = () => 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 const hasMouse = () => window.matchMedia('(pointer:fine)').matches;
+const prefersCoarse = () => window.matchMedia('(pointer: coarse)').matches;
 
 // If virtual keyboard is not supported, we can assume a physical keyboard is present.
 const hasPhysicalKeyboard = () => !isVirtualKeyboardSupported();
@@ -16,7 +17,11 @@ export const device = {
     hasMouse: hasMouse(),
     hasKeyboard: hasPhysicalKeyboard(),
     isTouchOnly: hasTouch() && !hasMouse() && !hasPhysicalKeyboard(),
+    // Primary input is a coarse pointer (phones + tablets) -> touch controls
+    isTouchPrimary: hasTouch() && prefersCoarse(),
+    isMobile: hasTouch() && prefersCoarse() && !hasMouse(),
     width: window.innerWidth,
     height: window.innerHeight,
     isWidthCompatible: window.innerWidth >= 768,
+    isSmallScreen: window.innerWidth < 768,
 };

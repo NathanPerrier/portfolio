@@ -2,6 +2,7 @@ import "nes.css/css/nes.min.css";
 import './css/style.css';
 import './css/theme.css';
 import './css/cursor.css';
+import './css/touch.css';
 
 import { initScene } from './three/scene.js';
 import { initCursor, frameImage } from './utils/cursor.js';
@@ -18,33 +19,15 @@ document.addEventListener('DOMContentLoaded', () => {
     // Reset audio manager to ensure fresh random track selection
     resetAudioManager();
 
-    if (frameImage.complete) {
-        initCursor();
-    } else {
-        frameImage.onload = initCursor;
-    }
+    // CSS hook for input mode (joystick HUD, cursor, dialog sizing)
+    document.body.classList.add(device.isTouchPrimary ? 'input-touch' : 'input-mouse');
 
-    // Check for device compatibility (touch-only devices OR width less than 768px)
-    if (device.isTouchOnly || !device.isWidthCompatible) {
-        const cursor = document.querySelector('.custom-cursor');
-        if (cursor) {
-            cursor.style.display = 'none';
-        }
-
-        const deviceMessage = document.getElementById('device-ui');
-        const deviceDialog = document.getElementById('device-dialog');
-        
-        if (deviceMessage) {
-            deviceMessage.style.display = 'flex';
-        }
-        
-        // Update the dialog message if it's a width issue
-        if (!device.isWidthCompatible && deviceDialog) {
-            const dialogTitle = deviceDialog.querySelector('.title');
-            const dialogMessage = deviceDialog.querySelector('p');
-            
-            dialogTitle.textContent = 'Screen Size Too Small';
-            dialogMessage.textContent = 'This website requires a minimum screen width of 768px. Please use a larger screen or resize your browser window.';
+    // Custom cursor only makes sense with a fine pointer
+    if (!device.isTouchPrimary) {
+        if (frameImage.complete) {
+            initCursor();
+        } else {
+            frameImage.onload = initCursor;
         }
     }
 
@@ -117,32 +100,8 @@ window.addEventListener('error', (event) => {
 
 // Handle window resize events
 window.addEventListener('resize', () => {
-    const deviceMessage = document.getElementById('device-ui');
-    const deviceDialog = document.getElementById('device-dialog');
-    const isNowCompatible = window.innerWidth >= 768;
-    
-    // Update device width properties
     device.width = window.innerWidth;
     device.height = window.innerHeight;
-    device.isWidthCompatible = isNowCompatible;
-    
-    // Show/hide device incompatibility dialog based on new width
-    if (!isNowCompatible && !device.isTouchOnly) {
-        if (deviceMessage) {
-            deviceMessage.style.display = 'flex';
-        }
-        
-        if (deviceDialog) {
-            const dialogTitle = deviceDialog.querySelector('.title');
-            const dialogMessage = deviceDialog.querySelector('p');
-            
-            dialogTitle.textContent = 'Screen Size Too Small';
-            dialogMessage.textContent = 'This website requires a minimum screen width of 768px. Please use a larger screen or resize your browser window.';
-        }
-    } else if (isNowCompatible && !device.isTouchOnly) {
-        // Hide the dialog if width is now compatible and device has keyboard/mouse
-        if (deviceMessage) {
-            deviceMessage.style.display = 'none';
-        }
-    }
+    device.isWidthCompatible = window.innerWidth >= 768;
+    device.isSmallScreen = window.innerWidth < 768;
 });
