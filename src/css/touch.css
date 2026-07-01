@@ -65,6 +65,37 @@ body.input-touch #joystick-zone {
   min-height: 48px;
 }
 
+/* Bigger tap targets while repositioned at a screen */
+body.input-touch #back-button {
+  min-width: 48px;
+  min-height: 48px;
+  bottom: 15%;
+}
+
+/* NES.css dialogs overflow small screens at their fixed sizes */
+@media (max-width: 640px) {
+  #hud-dialog, #timeout-dialog, #device-dialog {
+    width: 92vw;
+    max-width: 92vw;
+    font-size: 0.7rem;
+    padding: 12px;
+  }
+
+  #hud-ui, #timeout-ui, #device-ui {
+    font-size: 0.7rem;
+  }
+
+  #hud-dialog .title, #timeout-dialog .title, #device-dialog .title {
+    font-size: 1rem;
+  }
+
+  #loading-screen, #loading-text {
+    font-size: 0.8rem;
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
 /* Touch hint toast */
 .touch-toast {
   position: fixed;

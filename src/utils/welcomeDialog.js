@@ -1,3 +1,5 @@
+import { device } from './device.js';
+
 export function initNesUI() {
     const hudUI = document.getElementById('hud-ui');
     const hudDialog = document.getElementById('hud-dialog');
@@ -7,6 +9,18 @@ export function initNesUI() {
     const dialogPages = document.querySelectorAll('.dialog-page');
     const totalPages = dialogPages.length;
     let currentPage = 1;
+
+    // Touch devices get joystick instructions instead of WASD
+    if (device.isTouchPrimary) {
+        const controlsText = document.getElementById('dialog-controls-text');
+        const interactionsText = document.getElementById('dialog-interactions-text');
+        if (controlsText) {
+            controlsText.textContent = 'Use the joystick in the bottom-left corner to walk and drag anywhere else on the screen to look around.';
+        }
+        if (interactionsText) {
+            interactionsText.textContent = 'Some objects in the room are interactable. These are indicated by a white outline. Simply tap an object to interact with it, and use the BACK button to return.';
+        }
+    }
 
     if (localStorage.getItem('welcomeDialogSeen')) {
         hudUI.style.display = 'none';
