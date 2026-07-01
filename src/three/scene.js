@@ -295,7 +295,7 @@ export function initScene() {
         composer.addPass(bloomPass);
 
         // Optional: disable distortion for performance
-        const enableDistortion = !device.isMobile; // Disable on mobile
+        const enableDistortion = !device.isTouchOnly; // Disable on touch-only devices
         if (enableDistortion) {
             const distortionPass = new ShaderPass(DistortionShader);
             distortionPass.uniforms['strength'].value = .165;
