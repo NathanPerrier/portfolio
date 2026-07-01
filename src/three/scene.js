@@ -8,6 +8,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { addLights } from './utils/lights.js';
 import { createControls } from './utils/controls.js';
+import { createTouchControls } from './utils/touchControls.js';
 import { initPhysics, createPlayerPhysics, createObjectPhysics, createDebugger } from './utils/physics.js';
 import { createInteractionHandler } from './utils/interactive.js';
 import { createOutline } from './utils/outline.js';
@@ -309,8 +310,10 @@ export function initScene() {
         // Create interaction handler first
         const interactionHandler = createInteractionHandler(camera, interactiveObjects, null, audioManager, renderer);
         
-        // Create controls with interaction handler
-        const { controls, update: updateControls } = createControls(camera, renderer, playerBody, interactiveObjects, interactionHandler);
+        // Create controls with interaction handler (touch devices get joystick + drag-look)
+        const { controls, update: updateControls } = device.isTouchPrimary
+            ? createTouchControls(camera, renderer, playerBody, interactionHandler)
+            : createControls(camera, renderer, playerBody, interactiveObjects, interactionHandler);
         
         // Update interaction handler with controls and renderer reference
         interactionHandler.setControls(controls);
@@ -321,8 +324,9 @@ export function initScene() {
             hudManager.setTotalInteractables(interactiveObjects.length);
         }
 
+        // Touch devices interact via tap raycasts in touchControls instead
         window.addEventListener('click', () => {
-            if (!device.isTouchOnly) {
+            if (!device.isTouchPrimary) {
                 interactionHandler.onClick();
             }
         });
