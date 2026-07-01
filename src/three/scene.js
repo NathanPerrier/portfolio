@@ -5,7 +5,8 @@ import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { UnrealBloomPass } from 'three/examples/jsm/postprocessing/UnrealBloomPass.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
+import { KTX2Loader } from 'three/examples/jsm/loaders/KTX2Loader.js';
+import { MeshoptDecoder } from 'three/examples/jsm/libs/meshopt_decoder.module.js';
 import { addLights } from './utils/lights.js';
 import { createControls } from './utils/controls.js';
 import { createTouchControls } from './utils/touchControls.js';
@@ -130,12 +131,14 @@ export function initScene() {
         updateLoadingText('CSS3D renderer created.');
 
         const loader = new GLTFLoader(loadingManager);
-        
-        // Setup DRACO loader for compressed models
-        const dracoLoader = new DRACOLoader();
-        dracoLoader.setDecoderPath('https://www.gstatic.com/draco/v1/decoders/');
-        loader.setDRACOLoader(dracoLoader);
-        
+
+        // KTX2 textures transcode to the GPU-native format per device
+        const ktx2Loader = new KTX2Loader()
+            .setTranscoderPath(import.meta.env.BASE_URL + 'basis/')
+            .detectSupport(renderer);
+        loader.setKTX2Loader(ktx2Loader);
+        loader.setMeshoptDecoder(MeshoptDecoder);
+
         updateLoadingText('Asset loader created.');
 
         // Load sound effects
@@ -204,17 +207,15 @@ export function initScene() {
             resolve(sceneAPI);
         };
 
-        loader.load(import.meta.env.BASE_URL + 'assets/3d/room/room-optimized.glb', function (gltf) {
+        loader.load(import.meta.env.BASE_URL + 'assets/3d/room/room.ktx2.glb', function (gltf) {
           const model = gltf.scene;
           model.traverse(function (node) {
             if (node.isMesh) {
                 node.castShadow = quality.shadows;
                 node.receiveShadow = quality.shadows;
 
+                // KTX2 textures ship with mipmaps; only anisotropy needs tuning
                 if (node.material && node.material.map) {
-                    node.material.map.minFilter = THREE.LinearMipmapLinearFilter;
-                    node.material.map.generateMipmaps = true;
-                    // Limit anisotropy for performance
                     node.material.map.anisotropy = Math.min(quality.anisotropy, renderer.capabilities.getMaxAnisotropy());
                     node.material.map.needsUpdate = true;
                 }
@@ -276,6 +277,7 @@ export function initScene() {
           scene.add(model);
           ambientParticles = createAmbientParticles(scene);
           renderer.compile(scene, camera);
+          ktx2Loader.dispose(); // Free transcoder workers once textures are decoded
           updateLoadingText('Room loaded.');
           
         }, undefined, function (error) {
@@ -304,8 +306,9 @@ export function initScene() {
             composer.addPass(distortionPass);
         }
 
+        let scanlinePass = null;
         if (quality.scanlines) {
-            const scanlinePass = new ShaderPass(ScanlineShader);
+            scanlinePass = new ShaderPass(ScanlineShader);
             scanlinePass.renderToScreen = true;
             composer.addPass(scanlinePass);
         }
@@ -411,7 +414,9 @@ export function initScene() {
             interactionHandler.update();
             updateAmbientParticles(ambientParticles);
 
-            scanlinePass.uniforms.time.value = elapsedTime;
+            if (scanlinePass) {
+                scanlinePass.uniforms.time.value = elapsedTime;
+            }
 
             composer.render();
             css3dRenderer.render(scene, camera);
