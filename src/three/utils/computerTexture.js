@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import html2canvas from 'html2canvas';
+import { device } from '../../utils/device.js';
 
 export class ComputerTexture {
     constructor(config = {}) {
@@ -35,6 +36,95 @@ export class ComputerTexture {
         this.lastRenderTime = 0;
         this.renderQueue = false;
         this.activationTimeout = null; // Track activation timeout
+        this.touchKeyboardInput = null; // Hidden input that summons the virtual keyboard
+        this.touchKeyboardButton = null;
+    }
+
+    // Virtual keyboards only open from a direct user gesture, so touch devices
+    // get a TYPE button; tapping it focuses a hidden input whose keystrokes are
+    // forwarded through the existing keydownHandler.
+    createTouchKeyboardProxy() {
+        if (this.touchKeyboardInput) return;
+
+        this.touchKeyboardInput = document.createElement('input');
+        this.touchKeyboardInput.type = 'text';
+        this.touchKeyboardInput.setAttribute('autocapitalize', 'off');
+        this.touchKeyboardInput.setAttribute('autocomplete', 'off');
+        this.touchKeyboardInput.setAttribute('autocorrect', 'off');
+        this.touchKeyboardInput.setAttribute('spellcheck', 'false');
+        this.touchKeyboardInput.style.cssText =
+            'position:fixed;bottom:0;left:0;width:1px;height:1px;opacity:0.01;border:none;padding:0;z-index:-1;';
+
+        const forwardKey = (key) => {
+            if (!this.keydownHandler) return;
+            this.keydownHandler({
+                key,
+                keyCode: 0,
+                which: 0,
+                shiftKey: false,
+                ctrlKey: false,
+                altKey: false,
+                metaKey: false,
+                preventDefault: () => {},
+                stopPropagation: () => {},
+            });
+        };
+
+        this.touchBeforeInputHandler = (e) => {
+            e.preventDefault();
+            if (e.inputType === 'insertText' && e.data) {
+                for (const char of e.data) forwardKey(char);
+            } else if (e.inputType === 'insertLineBreak') {
+                forwardKey('Enter');
+            } else if (e.inputType === 'deleteContentBackward') {
+                forwardKey('Backspace');
+            }
+        };
+        // Some mobile keyboards report Enter/Backspace via keydown instead
+        this.touchKeydownHandler = (e) => {
+            if (e.key === 'Enter' || e.key === 'Backspace') {
+                e.preventDefault();
+                forwardKey(e.key);
+            }
+        };
+
+        this.touchKeyboardInput.addEventListener('beforeinput', this.touchBeforeInputHandler);
+        this.touchKeyboardInput.addEventListener('keydown', this.touchKeydownHandler);
+        document.body.appendChild(this.touchKeyboardInput);
+
+        this.touchKeyboardButton = document.createElement('button');
+        this.touchKeyboardButton.type = 'button';
+        this.touchKeyboardButton.className = 'nes-btn is-primary touch-keyboard-btn';
+        this.touchKeyboardButton.textContent = 'TYPE';
+        this.touchKeyboardButton.style.display = 'none';
+        this.touchKeyboardFocusHandler = () => this.touchKeyboardInput.focus();
+        this.touchKeyboardButton.addEventListener('click', this.touchKeyboardFocusHandler);
+        document.body.appendChild(this.touchKeyboardButton);
+    }
+
+    showTouchKeyboardButton() {
+        this.createTouchKeyboardProxy();
+        this.touchKeyboardButton.style.display = 'block';
+    }
+
+    hideTouchKeyboardButton() {
+        if (!this.touchKeyboardButton) return;
+        this.touchKeyboardButton.style.display = 'none';
+        this.touchKeyboardInput.blur();
+    }
+
+    disposeTouchKeyboardProxy() {
+        if (this.touchKeyboardInput) {
+            this.touchKeyboardInput.removeEventListener('beforeinput', this.touchBeforeInputHandler);
+            this.touchKeyboardInput.removeEventListener('keydown', this.touchKeydownHandler);
+            this.touchKeyboardInput.remove();
+            this.touchKeyboardInput = null;
+        }
+        if (this.touchKeyboardButton) {
+            this.touchKeyboardButton.removeEventListener('click', this.touchKeyboardFocusHandler);
+            this.touchKeyboardButton.remove();
+            this.touchKeyboardButton = null;
+        }
     }
     
     init(computerMesh) {
@@ -397,10 +487,42 @@ export class ComputerTexture {
         }
         
         this.isMouseActive = true;
-        
+
+        // Touch users get a direct link in case iframe tap forwarding is clunky
+        if (device.isTouchPrimary) {
+            this.showOpenSiteButton();
+        }
+
         // Switch to full rendering mode when mouse is activated
         if (this.isActive) {
             this.startRendering();
+        }
+    }
+
+    showOpenSiteButton() {
+        if (!this.openSiteButton) {
+            this.openSiteButton = document.createElement('button');
+            this.openSiteButton.type = 'button';
+            this.openSiteButton.className = 'nes-btn is-primary open-site-btn';
+            this.openSiteButton.textContent = 'OPEN SITE';
+            this.openSiteClickHandler = () => window.open(this.config.src, '_blank');
+            this.openSiteButton.addEventListener('click', this.openSiteClickHandler);
+            document.body.appendChild(this.openSiteButton);
+        }
+        this.openSiteButton.style.display = 'block';
+    }
+
+    hideOpenSiteButton() {
+        if (this.openSiteButton) {
+            this.openSiteButton.style.display = 'none';
+        }
+    }
+
+    disposeOpenSiteButton() {
+        if (this.openSiteButton) {
+            this.openSiteButton.removeEventListener('click', this.openSiteClickHandler);
+            this.openSiteButton.remove();
+            this.openSiteButton = null;
         }
     }
 
@@ -411,6 +533,7 @@ export class ComputerTexture {
         if (this.mouseContainer) {
             this.mouseContainer.style.display = 'none';
         }
+        this.hideOpenSiteButton();
         
         // Send message to iframe content
         if (this.iframe && this.iframe.contentWindow) {
@@ -478,9 +601,10 @@ export class ComputerTexture {
             this.iframe.contentWindow.postMessage('deactivate', '*');
         }
         this.isInputActive = false;
-        
+
         // Remove keyboard listeners properly
         this.removeKeyboardHandlers();
+        this.hideTouchKeyboardButton();
         
         // Switch back to preview mode if still active but no mouse is active
         if (this.isActive && !this.isMouseActive) {
@@ -580,11 +704,16 @@ export class ComputerTexture {
         this.removeKeyboardHandlers();
         
         this.isInputActive = true;
-        
+
         // Add keyboard listeners
         document.addEventListener('keydown', this.keydownHandler, true);
         document.addEventListener('keyup', this.keyupHandler, true);
         document.addEventListener('keypress', this.keypressHandler, true);
+
+        // Touch devices type via the virtual keyboard proxy
+        if (device.isTouchPrimary) {
+            this.showTouchKeyboardButton();
+        }
         
         // Send activation message to iframe
         if (this.iframe && this.iframe.contentWindow) {
@@ -622,6 +751,8 @@ export class ComputerTexture {
         // Clean up all resources
         this.hide();
         this.removeKeyboardHandlers();
+        this.disposeTouchKeyboardProxy();
+        this.disposeOpenSiteButton();
         
         // Clear any intervals and timeouts
         if (this.previewInterval) {

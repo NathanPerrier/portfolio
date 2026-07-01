@@ -348,15 +348,51 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
         animateCamera();
     }
 
+    function activateIntersected() {
+        if (!lastIntersected) return;
+
+        const properties = objectProperties[cleanString(lastIntersected.name)];
+
+        if (properties) {
+            if (properties.reposition) {
+                // Clear window focus debounce before repositioning
+                if (windowFocusDebounceTimeout) {
+                    clearTimeout(windowFocusDebounceTimeout);
+                    windowFocusDebounceTimeout = null;
+                }
+                repositionCamera(lastIntersected);
+            } else {
+                // Check for window focus debounce for non-repositioning objects (external links)
+                if (windowFocusDebounceTimeout) {
+                    return;
+                }
+
+                // Execute action immediately for non-repositioning objects
+                if (audioManager) {
+                    audioManager.playSound('interact');
+                }
+
+                window.dispatchEvent(new CustomEvent('object-interacted', {
+                    detail: { objectName: lastIntersected.name }
+                }));
+
+                if (properties.action) {
+                    properties.action(lastIntersected);
+                }
+            }
+        }
+    }
+
+    function isWhiteboardActive() {
+        const whiteboardOverlay = document.getElementById('whiteboard-overlay');
+        return whiteboardOverlay && whiteboardOverlay.style.display === 'block';
+    }
+
     function onClick() {
         if (isAnimating) return;
 
-        // Check if whiteboard is active - if so, allow clicks for drawing
-        const whiteboardOverlay = document.getElementById('whiteboard-overlay');
-        if (whiteboardOverlay && whiteboardOverlay.style.display === 'block') {
-            // Don't interfere with whiteboard drawing
-            return;
-        }
+        // Don't interfere with whiteboard drawing
+        if (isWhiteboardActive()) return;
 
         // Check if controls exist and if they were unlocked before this click
         if (controlsRef && wasControlsUnlocked && !controlsRef.isLocked) {
@@ -368,38 +404,23 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
         if (isRepositioned) {
             // Do nothing when repositioned - user must click back button
             return;
-        } else if (lastIntersected) {
-            const properties = objectProperties[cleanString(lastIntersected.name)];
-            
-            if (properties) {
-                if (properties.reposition) {
-                    // Clear window focus debounce before repositioning
-                    if (windowFocusDebounceTimeout) {
-                        clearTimeout(windowFocusDebounceTimeout);
-                        windowFocusDebounceTimeout = null;
-                    }
-                    repositionCamera(lastIntersected);
-                } else {
-                    // Check for window focus debounce for non-repositioning objects (external links)
-                    if (windowFocusDebounceTimeout) {
-                        return;
-                    }
-                    
-                    // Execute action immediately for non-repositioning objects
-                    if (audioManager) {
-                        audioManager.playSound('interact');
-                    }
-                    
-                    window.dispatchEvent(new CustomEvent('object-interacted', { 
-                        detail: { objectName: lastIntersected.name } 
-                    }));
-                    
-                    if (properties.action) {
-                        properties.action(lastIntersected);
-                    }
-                }
-            }
         }
+
+        activateIntersected();
+    }
+
+    // Touch path: raycast from tap position instead of screen center.
+    // No pointer lock on touch, so the lock-consumption guard doesn't apply.
+    function onTap(ndcX, ndcY) {
+        if (isAnimating || isRepositioned) return;
+        if (isWhiteboardActive()) return;
+
+        raycaster.setFromCamera({ x: ndcX, y: ndcY }, camera);
+        const intersects = raycaster.intersectObjects(interactiveObjects, true);
+        if (intersects.length === 0) return;
+
+        lastIntersected = intersects[0].object;
+        activateIntersected();
     }
 
     function navigateToObject(object) {
@@ -444,9 +465,10 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
         rendererRef = newRenderer;
     }
 
-    return { 
-        update, 
-        onClick, 
+    return {
+        update,
+        onClick,
+        onTap,
         isRepositioned: () => isRepositioned,
         isAnimating: () => isAnimating,
         navigateToObject,

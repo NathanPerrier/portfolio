@@ -1,6 +1,8 @@
 import { getAudioManager } from '../../utils/AudioManager.js';
 import { analytics } from '../../utils/analytics.js';
 import { whiteboardManager } from '../../utils/whiteboard.js';
+import { device } from '../../utils/device.js';
+import { showTouchToast } from '../../utils/touchToast.js';
 
 //adjust y for height
 
@@ -48,6 +50,9 @@ export const objectProperties = {
     action: (object) => {
       if (object.userData.arcadeScreen) {
         object.userData.arcadeScreen.show();
+        if (device.isTouchPrimary) {
+          showTouchToast('Arcade games play best with a keyboard!');
+        }
         analytics.trackInteraction('arcade', 'play_game');
       }
     }
