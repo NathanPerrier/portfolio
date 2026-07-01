@@ -19,7 +19,10 @@ const tiers = {
     mobile: {
         pixelRatioCap: 1.5,
         antialias: false,
-        shadows: false,
+        // Shadows stay on: the room's point lights are very bright and the
+        // dark look depends on shadow occlusion - disabling them washes out
+        // the whole scene. Smaller maps keep the cost down.
+        shadows: true,
         shadowMapSize: 256,
         bloom: false,
         distortion: false,
