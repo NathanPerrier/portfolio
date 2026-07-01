@@ -16,6 +16,7 @@ import { createLoadingManager } from './utils/loading.js';
 import { DistortionShader } from './utils/distortionShader.js';
 import { ScanlineShader } from './utils/scanlineShader.js';
 import { device } from '../utils/device.js';
+import { quality } from '../utils/quality.js';
 import { getAudioManager } from '../utils/AudioManager.js';
 import { createAmbientParticles, updateAmbientParticles, disposeAmbientParticles } from './utils/ambientParticles.js';
 import { analytics } from '../utils/analytics.js';
@@ -81,7 +82,7 @@ export function initScene() {
         try {
             renderer = new THREE.WebGLRenderer({
                 canvas: document.querySelector('#bg'),
-                antialias: true,
+                antialias: quality.antialias,
                 alpha: true,
                 powerPreference: "high-performance",
                 failIfMajorPerformanceCaveat: false,
@@ -106,14 +107,14 @@ export function initScene() {
         renderer.setClearColor(0x000000, 0);
         updateLoadingText('Renderer created.');
 
-        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.enabled = quality.shadows;
         renderer.shadowMap.type = THREE.PCFShadowMap; // Less expensive than PCFSoftShadowMap
         renderer.outputColorSpace = THREE.SRGBColorSpace;
         renderer.toneMapping = THREE.ACESFilmicToneMapping;
         renderer.toneMappingExposure =  .45;
 
-        // Limit pixel ratio to 2 for performance
-        const pixelRatio = Math.min(window.devicePixelRatio, 2);
+        // Limit pixel ratio for performance
+        const pixelRatio = Math.min(window.devicePixelRatio, quality.pixelRatioCap);
         renderer.setPixelRatio(pixelRatio);
 
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -207,14 +208,14 @@ export function initScene() {
           const model = gltf.scene;
           model.traverse(function (node) {
             if (node.isMesh) {
-                node.castShadow = true;
-                node.receiveShadow = true;
-                
+                node.castShadow = quality.shadows;
+                node.receiveShadow = quality.shadows;
+
                 if (node.material && node.material.map) {
                     node.material.map.minFilter = THREE.LinearMipmapLinearFilter;
                     node.material.map.generateMipmaps = true;
                     // Limit anisotropy for performance
-                    node.material.map.anisotropy = Math.min(4, renderer.capabilities.getMaxAnisotropy());
+                    node.material.map.anisotropy = Math.min(quality.anisotropy, renderer.capabilities.getMaxAnisotropy());
                     node.material.map.needsUpdate = true;
                 }
                 
@@ -266,10 +267,10 @@ export function initScene() {
                 }
             }
             if (node.isLight) {
-                node.castShadow = true;
+                node.castShadow = quality.shadows;
                 node.shadow.bias = -0.0005;
-                node.shadow.mapSize.width = 512; // Reduced from 1024
-                node.shadow.mapSize.height = 512; // Reduced from 1024
+                node.shadow.mapSize.width = quality.shadowMapSize;
+                node.shadow.mapSize.height = quality.shadowMapSize;
             }
           });
           scene.add(model);
@@ -287,25 +288,27 @@ export function initScene() {
         const composer = new EffectComposer(renderer);
         composer.addPass(new RenderPass(scene, camera));
 
-        // Reduce bloom resolution for better performance
-        const bloomResolution = new THREE.Vector2(
-            window.innerWidth / 2,  // Half resolution
-            window.innerHeight / 2
-        );
-        const bloomPass = new UnrealBloomPass(bloomResolution, 0.25, 0.4, 0.85);
-        composer.addPass(bloomPass);
+        if (quality.bloom) {
+            // Reduce bloom resolution for better performance
+            const bloomResolution = new THREE.Vector2(
+                window.innerWidth / 2,  // Half resolution
+                window.innerHeight / 2
+            );
+            const bloomPass = new UnrealBloomPass(bloomResolution, 0.25, 0.4, 0.85);
+            composer.addPass(bloomPass);
+        }
 
-        // Optional: disable distortion for performance
-        const enableDistortion = !device.isTouchOnly; // Disable on touch-only devices
-        if (enableDistortion) {
+        if (quality.distortion) {
             const distortionPass = new ShaderPass(DistortionShader);
             distortionPass.uniforms['strength'].value = .165;
             composer.addPass(distortionPass);
         }
 
-        const scanlinePass = new ShaderPass(ScanlineShader);
-        scanlinePass.renderToScreen = true;
-        composer.addPass(scanlinePass);
+        if (quality.scanlines) {
+            const scanlinePass = new ShaderPass(ScanlineShader);
+            scanlinePass.renderToScreen = true;
+            composer.addPass(scanlinePass);
+        }
 
         // Create interaction handler first
         const interactionHandler = createInteractionHandler(camera, interactiveObjects, null, audioManager, renderer);

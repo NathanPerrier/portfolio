@@ -1,6 +1,7 @@
 import * as THREE from 'three'
+import { quality } from '../../utils/quality.js'
 
-const PARTICLE_COUNT = 100
+const PARTICLE_COUNT = Math.round(100 * quality.particleDensity)
 
 // Room bounds (approximate)
 const BOUNDS = {

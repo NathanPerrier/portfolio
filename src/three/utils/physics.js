@@ -1,15 +1,16 @@
 import * as CANNON from 'cannon-es';
 import * as THREE from 'three';
 import CannonDebugger from 'cannon-es-debugger';
+import { quality } from '../../utils/quality.js';
 
 export function initPhysics() {
     const world = new CANNON.World({
         gravity: new CANNON.Vec3(0, -9.82, 0),
     });
-    
+
     // Optimize physics performance
     world.broadphase = new CANNON.SAPBroadphase(world);
-    world.solver.iterations = 5; // Reduced from default 10
+    world.solver.iterations = quality.physicsIterations; // Reduced from default 10
     world.defaultContactMaterial.contactEquationStiffness = 1e6;
     world.defaultContactMaterial.contactEquationRelaxation = 3;
 
