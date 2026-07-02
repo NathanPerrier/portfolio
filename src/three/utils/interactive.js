@@ -230,6 +230,7 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
                 isAnimating = false;
                 isRepositioned = true;
                 showBackButton();
+                document.body.classList.add('interaction-active');
 
                 // Keep controls unlocked and disabled while repositioned
                 if (controlsRef) {
@@ -342,9 +343,10 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
                 }
                 
                 repositionedObject = null;
+                document.body.classList.remove('interaction-active');
             }
         }
-        
+
         animateCamera();
     }
 

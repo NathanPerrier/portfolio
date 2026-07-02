@@ -3,6 +3,8 @@ import { ArcadeGame } from '../../utils/arcadeGame.js';
 import { PongGame } from '../../utils/games/pong.js';
 import { SnakeGame } from '../../utils/games/snake.js';
 import { PacManGame } from '../../utils/games/pacman.js';
+import { device } from '../../utils/device.js';
+import { showArcadeDpad, hideArcadeDpad } from '../../utils/arcadeDpad.js';
 
 const GAME_REGISTRY = [
     { label: 'BREAKOUT', Class: ArcadeGame },
@@ -99,6 +101,7 @@ export class ArcadeScreenTexture {
     hide() {
         this._stopCurrentGame();
         this._removeMenuControls();
+        hideArcadeDpad();
         this.state = 'attract';
         this._drawAttractMode();
     }
@@ -114,6 +117,7 @@ export class ArcadeScreenTexture {
         this.state = 'menu';
         this._drawMenu();
         this._setupMenuControls();
+        showArcadeDpad();
     }
 
     _launchGame(index) {
@@ -183,7 +187,8 @@ export class ArcadeScreenTexture {
         ctx.fillStyle = '#333333';
         ctx.font = '7px monospace';
         ctx.textAlign = 'center';
-        ctx.fillText('↑↓ SELECT   ENTER START   ESC BACK', W / 2, H - 5);
+        const hint = device.isTouchPrimary ? '▲▼ SELECT   A START   B BACK' : '↑↓ SELECT   ENTER START   ESC BACK';
+        ctx.fillText(hint, W / 2, H - 5);
 
         if (this.texture) this.texture.needsUpdate = true;
     }
@@ -202,7 +207,7 @@ export class ArcadeScreenTexture {
         ctx.fillText('ARCADE GAMES', W / 2, H / 2 - 14);
 
         ctx.font = 'bold 10px monospace';
-        ctx.fillText('CLICK TO PLAY', W / 2, H / 2 + 8);
+        ctx.fillText(device.isTouchPrimary ? 'TAP TO PLAY' : 'CLICK TO PLAY', W / 2, H / 2 + 8);
 
         ctx.fillStyle = '#333333';
         ctx.font = '8px monospace';

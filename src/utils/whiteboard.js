@@ -85,14 +85,14 @@ export class WhiteboardManager {
             opacity: 0.9;
             border: none;
             padding: 10px;
-            min-width: 400px;
+            min-width: min(400px, calc(100vw - 32px));
             pointer-events: all;
             z-index: 1000;
         `;
         
         // Tools container
         const toolsContainer = document.createElement('div');
-        toolsContainer.style.cssText = 'display: flex; gap: 10px; align-items: center; justify-content: center;';
+        toolsContainer.style.cssText = 'display: flex; flex-wrap: wrap; gap: 10px; align-items: center; justify-content: center;';
         
         // Color buttons
         const colors = [
@@ -205,6 +205,7 @@ export class WhiteboardManager {
         } else {
             console.error('No overlay found!');
         }
+        document.body.classList.add('whiteboard-open');
     }
 
     hide() {
@@ -215,6 +216,7 @@ export class WhiteboardManager {
         if (overlay) {
             overlay.style.display = 'none';
         }
+        document.body.classList.remove('whiteboard-open');
         this.stopDrawing();
     }
 

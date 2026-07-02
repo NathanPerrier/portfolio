@@ -67,11 +67,112 @@ body.input-touch #joystick-zone {
   min-height: 48px;
 }
 
+/* Hide joystick while any interactive overlay is open */
+body.interaction-active #joystick-zone {
+  display: none !important;
+}
+
 /* Bigger tap targets while repositioned at a screen */
 body.input-touch #back-button {
   min-width: 48px;
   min-height: 48px;
   bottom: 15%;
+}
+
+/* Whiteboard toolbar (bottom: 25%) is too close to back button (bottom: 15%) on small screens.
+   Push back button above the toolbar when whiteboard is open. */
+body.whiteboard-open #back-button {
+  bottom: 38% !important;
+}
+
+/* ── Arcade D-pad overlay ───────────────────────────────────────────────── */
+
+#arcade-dpad {
+  display: none;
+  position: fixed;
+  bottom: calc(env(safe-area-inset-bottom) + 16px);
+  left: 0;
+  right: 0;
+  padding: 0 20px;
+  z-index: 1100;
+  pointer-events: none;
+  align-items: flex-end;
+  justify-content: space-between;
+}
+
+#arcade-dpad.is-visible {
+  display: flex;
+}
+
+/* D-pad cross (left side) — 3×3 CSS grid, centre cell empty */
+.dpad-cross {
+  display: grid;
+  grid-template-columns: repeat(3, 52px);
+  grid-template-rows: repeat(3, 52px);
+  gap: 4px;
+  pointer-events: all;
+}
+
+.dpad-cross .dpad-btn[data-area="up"]    { grid-column: 2; grid-row: 1; }
+.dpad-cross .dpad-btn[data-area="left"]  { grid-column: 1; grid-row: 2; }
+.dpad-cross .dpad-btn[data-area="right"] { grid-column: 3; grid-row: 2; }
+.dpad-cross .dpad-btn[data-area="down"]  { grid-column: 2; grid-row: 3; }
+
+/* Action buttons (right side) */
+.dpad-actions {
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 16px;
+  align-items: center;
+  pointer-events: all;
+  padding-bottom: 26px;
+}
+
+/* Shared button style */
+.dpad-btn {
+  width: 52px;
+  height: 52px;
+  border-radius: 8px;
+  border: 3px solid rgba(255, 255, 255, 0.7);
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  cursor: pointer;
+  transition: background 0.08s, transform 0.08s;
+}
+
+.dpad-btn.pressed,
+.dpad-btn:active {
+  background: rgba(146, 204, 65, 0.5);
+  border-color: #92cc41;
+  transform: scale(0.92);
+}
+
+/* Round action buttons */
+.dpad-action-btn {
+  border-radius: 50%;
+  width: 56px;
+  height: 56px;
+  font-size: 14px;
+  font-weight: bold;
+  font-family: monospace;
+}
+
+#dpad-a {
+  background: rgba(146, 204, 65, 0.35);
+  border-color: #92cc41;
+}
+
+#dpad-b {
+  background: rgba(200, 76, 76, 0.35);
+  border-color: #c84c4c;
 }
 
 /* NES.css dialogs overflow small screens at their fixed sizes */
