@@ -24,6 +24,7 @@ export class ComputerTexture {
         this.material = null;
         this.screenMesh = null;
         this.isActive = false;
+        this.iframeLoaded = false;
         this.iframe = null;
         this.updateInterval = null;
         this.previewInterval = null;
@@ -221,8 +222,6 @@ export class ComputerTexture {
         if (this.config.enableKeyboard) {
             this.createInputProxy();
         }
-        
-        this.renderIframeToCanvas();
     }
     
     createIframe() {
@@ -235,12 +234,21 @@ export class ComputerTexture {
         this.iframe.style.height = this.config.height + 'px';
         this.iframe.style.border = 'none';
         this.iframe.style.background = '#000';
-        
+
         // Initially disable pointer events if mouse is enabled
         if (this.config.enableMouse) {
             this.iframe.style.pointerEvents = 'none';
         }
-        
+
+        // Render once the iframe content is actually ready
+        this.iframe.addEventListener('load', () => {
+            this.iframeLoaded = true;
+            if (this.isActive) {
+                // Small delay lets the page finish painting before capture
+                setTimeout(() => this.renderIframeToCanvas(), 300);
+            }
+        });
+
         document.body.appendChild(this.iframe);
     }
     
@@ -252,16 +260,19 @@ export class ComputerTexture {
         if (this.updateInterval) {
             cancelAnimationFrame(this.updateInterval);
         }
-        
-        // Initial render
-        this.renderIframeToCanvas();
-        
+
+        // Trigger an immediate render if the iframe is already loaded;
+        // otherwise the 'load' event handler will fire the first render.
+        if (this.iframeLoaded) {
+            this.renderIframeToCanvas();
+        }
+
         // Update every 10 seconds in preview mode
         this.previewInterval = setInterval(() => {
             if (this.isActive && !this.isInputActive && !this.isMouseActive) {
                 this.renderIframeToCanvas();
             }
-        }, 10000); // 10 seconds
+        }, 10000);
     }
     
     startRendering() {
@@ -294,18 +305,21 @@ export class ComputerTexture {
     }
     
     renderIframeToCanvas() {
+        // Bail out until the iframe has fired its load event
+        if (!this.iframeLoaded) return;
+
         // Prevent overlapping renders
         if (this.isRendering) {
             this.renderQueue = true;
             return;
         }
-        
+
         this.isRendering = true;
-        
+
         try {
             // Access iframe document
             const iframeDoc = this.iframe.contentDocument || this.iframe.contentWindow.document;
-            
+
             if (!iframeDoc || !iframeDoc.body) {
                 console.warn('Iframe document not accessible');
                 this.isRendering = false;
