@@ -191,9 +191,11 @@ input.terminal-input:active {
   scrollbar-color: var(--terminal-text) var(--terminal-bg);
 }
 
-/* For better visibility, make scrollbar track slightly different from bg */
+/* For better visibility, make scrollbar track slightly different from bg.
+   Static value (10% text over bg): html2canvas can't parse color-mix() in
+   Safari, which freezes the 3D terminal screen texture. */
 .terminal-body::-webkit-scrollbar-track {
-  background: color-mix(in srgb, var(--terminal-text) 10%, var(--terminal-bg));
+  background: #001a00;
 }
 
 /* Override terminal.css pre element styling */

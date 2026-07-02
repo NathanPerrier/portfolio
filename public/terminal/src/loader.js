@@ -3,7 +3,16 @@ export function startLoader() {
   const progressFill = document.querySelector('.progress-fill');
   const loader = document.getElementById('loader');
   const app = document.getElementById('app');
-  
+
+  // Embedded in the 3D scene: Safari throttles timers in offscreen iframes
+  // to ~1Hz, which stretches this 1s animation to nearly a minute and leaves
+  // the screen texture stuck on the boot bar. Skip straight to the app.
+  if (window.self !== window.top) {
+    loader.style.display = 'none';
+    app.style.visibility = 'visible';
+    return Promise.resolve();
+  }
+
   // Initially hide the app
   app.style.visibility = 'hidden';
   
