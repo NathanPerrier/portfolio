@@ -152,7 +152,7 @@ export class WhiteboardManager {
             left: 0;
             width: 100%;
             height: 70%;
-            z-index: 50;
+            z-index: 9;
             cursor: none;
             display: none;
             pointer-events: auto;

@@ -79,10 +79,11 @@ body.input-touch #back-button {
   bottom: 15%;
 }
 
-/* Whiteboard toolbar (bottom: 25%) is too close to back button (bottom: 15%) on small screens.
-   Push back button above the toolbar when whiteboard is open. */
-body.whiteboard-open #back-button {
-  bottom: 38% !important;
+/* When repositioned at any screen, push the back button above all bottom overlays:
+   whiteboard toolbar (≈33% from viewport bottom) and arcade d-pad (≈21%).
+   Uses interaction-active which fires for every reposition on all interactions. */
+body.input-touch.interaction-active #back-button {
+  bottom: 42%;
 }
 
 /* ── Arcade D-pad overlay ───────────────────────────────────────────────── */
