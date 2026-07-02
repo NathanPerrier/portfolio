@@ -23,12 +23,13 @@ body.input-touch .custom-cursor {
   position: fixed;
   /* Inset past the CRT bezel art (#frame spans the viewport, z-index 101)
      and clear the bottom navbar (bottom: 15% + its height) */
-  left: calc(7vw + env(safe-area-inset-left));
+  left: calc(12vw + env(safe-area-inset-left));
   bottom: calc(max(8vh, 15% + 72px) + env(safe-area-inset-bottom));
   width: 140px;
   height: 140px;
   z-index: 102;
   touch-action: none;
+  opacity: 0.6;
 }
 
 body.input-touch #joystick-zone {
@@ -79,11 +80,12 @@ body.input-touch #back-button {
   bottom: 15%;
 }
 
-/* When repositioned at any screen, push the back button above all bottom overlays:
-   whiteboard toolbar (≈33% from viewport bottom) and arcade d-pad (≈21%).
-   Uses interaction-active which fires for every reposition on all interactions. */
+/* When repositioned at any screen, anchor the back button just above the d-pad.
+   Uses the same max(8%, 15%+72px) as the d-pad formula (% = vh since #ui-padding
+   height is 100vh), offset by 7.5% to correct for #ui-padding extending 7.5vh past
+   the viewport, plus d-pad height (164px) and a 12px gap = 176px. */
 body.input-touch.interaction-active #back-button {
-  bottom: 42%;
+  bottom: calc(max(8%, 15% + 72px) + 7.5% + 176px + env(safe-area-inset-bottom));
 }
 
 /* ── Arcade D-pad overlay ───────────────────────────────────────────────── */
@@ -91,10 +93,10 @@ body.input-touch.interaction-active #back-button {
 #arcade-dpad {
   display: none;
   position: fixed;
-  bottom: calc(env(safe-area-inset-bottom) + 16px);
+  bottom: calc(max(8vh, 15% + 40px) + env(safe-area-inset-bottom));
   left: 0;
   right: 0;
-  padding: 0 20px;
+  padding: 0 9vw;
   z-index: 1100;
   pointer-events: none;
   align-items: flex-end;
@@ -147,6 +149,7 @@ body.input-touch.interaction-active #back-button {
   user-select: none;
   cursor: pointer;
   transition: background 0.08s, transform 0.08s;
+  opacity: 0.6;
 }
 
 .dpad-btn.pressed,
