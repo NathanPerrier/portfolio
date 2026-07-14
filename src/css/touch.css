@@ -3,14 +3,14 @@
 body.input-touch {
   cursor: auto;
   overscroll-behavior: none;
-  touch-action: none;
+  touch-action: manipulation;
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
 }
 
 body.input-touch canvas {
-  touch-action: none;
+  touch-action: manipulation;
 }
 
 body.input-touch .custom-cursor {
@@ -81,11 +81,9 @@ body.input-touch #back-button {
 }
 
 /* When repositioned at any screen, anchor the back button just above the d-pad.
-   Uses the same max(8%, 15%+72px) as the d-pad formula (% = vh since #ui-padding
-   height is 100vh), offset by 7.5% to correct for #ui-padding extending 7.5vh past
-   the viewport, plus d-pad height (164px) and a 12px gap = 176px. */
+   #ui-padding is a real inset box, so no compensating 7.5vh offset is needed. */
 body.input-touch.interaction-active #back-button {
-  bottom: calc(max(8%, 15% + 72px) + 7.5% + 176px + env(safe-area-inset-bottom));
+  bottom: calc(max(8%, 15% + 72px) + 176px + env(safe-area-inset-bottom));
 }
 
 /* ── Arcade D-pad overlay ───────────────────────────────────────────────── */

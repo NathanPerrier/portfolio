@@ -71,6 +71,31 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
         }
     }
 
+    function resolveInteractionRoot(object) {
+        let current = object;
+
+        while (current) {
+            if (current.userData?.interactionId) return current;
+            if (current.userData?.interactionRoot) return current.userData.interactionRoot;
+            current = current.parent;
+        }
+
+        return null;
+    }
+
+    function getInteractionId(object) {
+        return object?.userData?.interactionId || cleanString(object?.name || '');
+    }
+
+    function setOutlineVisibility(object, visible) {
+        const outlines = object?.userData?.outlines
+            || (object?.userData?.outline ? [object.userData.outline] : []);
+
+        outlines.forEach((outline) => {
+            outline.visible = visible;
+        });
+    }
+
     function update() {
         if (isRepositioned || isAnimating) return;
 
@@ -78,27 +103,27 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
         const intersects = raycaster.intersectObjects(interactiveObjects, true);
 
         if (lastIntersected && lastIntersected !== repositionedObject) {
-            lastIntersected.userData.outline.visible = false;
+            setOutlineVisibility(lastIntersected, false);
         }
 
         let previousIntersected = lastIntersected;
         lastIntersected = null;
 
         if (intersects.length > 0) {
-            const selectedObject = intersects[0].object;
-            if (selectedObject.userData.outline) {
-                selectedObject.userData.outline.visible = true;
+            const selectedObject = resolveInteractionRoot(intersects[0].object);
+            if (selectedObject) {
+                setOutlineVisibility(selectedObject, true);
                 if (previousIntersected !== selectedObject && audioManager) {
                     audioManager.playSound('button_hover', 0.2);
                 }
                 lastIntersected = selectedObject;
                 
                 // Start rendering computer screens when hovering over them
-                if (selectedObject.name.toLowerCase().includes('computerterminal_interactive')) {
+                if (getInteractionId(selectedObject) === 'computerTerminal_interactive') {
                     if (selectedObject.userData.computerTerminalScreen) {
                         selectedObject.userData.computerTerminalScreen.show();
                     }
-                } else if (selectedObject.name.toLowerCase().includes('computerwebsite_interactive')) {
+                } else if (getInteractionId(selectedObject) === 'computerWebsite_interactive') {
                     if (selectedObject.userData.websiteScreen) {
                         selectedObject.userData.websiteScreen.show();
                     }
@@ -109,7 +134,7 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
 
     function calculateRepositionPoint(object) {
         // Check if custom position and lookAt are defined for this object
-        const properties = objectProperties[cleanString(object.name)];
+        const properties = objectProperties[getInteractionId(object)];
         
         if (properties && properties.position && properties.lookAt) {
             // Use custom position and lookAt if defined
@@ -241,12 +266,10 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
                 }
                 
                 // Show object outline
-                if (repositionedObject && repositionedObject.userData.outline) {
-                    repositionedObject.userData.outline.visible = true;
-                }
+                setOutlineVisibility(repositionedObject, true);
 
                 // object action
-                const properties = objectProperties[cleanString(repositionedObject.name)];
+                const properties = objectProperties[getInteractionId(repositionedObject)];
                 if (properties && properties.action) {
                     properties.action(repositionedObject, camera, rendererRef);
                 }
@@ -312,31 +335,29 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
                 }
                 
                 // Clear repositioned object outline
-                if (repositionedObject && repositionedObject.userData.outline) {
-                    repositionedObject.userData.outline.visible = false;
-                }
+                setOutlineVisibility(repositionedObject, false);
                 
                 // Hide whiteboard UI if it was open
-                if (repositionedObject && cleanString(repositionedObject.name) === 'whiteBoard_interactive') {
+                if (getInteractionId(repositionedObject) === 'whiteBoard_interactive') {
                     whiteboardManager.hide();
                 }
                 
                 // Hide arcade screen if it was open
-                if (repositionedObject && cleanString(repositionedObject.name) === 'arcade_interactive') {
+                if (getInteractionId(repositionedObject) === 'arcade_interactive') {
                     if (repositionedObject.userData.arcadeScreen) {
                         repositionedObject.userData.arcadeScreen.hide();
                     }
                 }
                 
                 // Deactivate computer terminal input if it was open
-                if (repositionedObject && cleanString(repositionedObject.name) === 'computerTerminal_interactive') {
+                if (getInteractionId(repositionedObject) === 'computerTerminal_interactive') {
                     if (repositionedObject.userData.computerTerminalScreen) {
                         repositionedObject.userData.computerTerminalScreen.deactivateInput();
                     }
                 }
                 
                 // Deactivate computer website mouse if it was open
-                if (repositionedObject && cleanString(repositionedObject.name) === 'computerWebsite_interactive') {
+                if (getInteractionId(repositionedObject) === 'computerWebsite_interactive') {
                     if (repositionedObject.userData.websiteScreen) {
                         repositionedObject.userData.websiteScreen.deactivateMouse(rendererRef);
                     }
@@ -353,7 +374,7 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
     function activateIntersected() {
         if (!lastIntersected) return;
 
-        const properties = objectProperties[cleanString(lastIntersected.name)];
+        const properties = objectProperties[getInteractionId(lastIntersected)];
 
         if (properties) {
             if (properties.reposition) {
@@ -421,14 +442,14 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
         const intersects = raycaster.intersectObjects(interactiveObjects, true);
         if (intersects.length === 0) return;
 
-        lastIntersected = intersects[0].object;
-        activateIntersected();
+        lastIntersected = resolveInteractionRoot(intersects[0].object);
+        if (lastIntersected) activateIntersected();
     }
 
     function navigateToObject(object) {
         if (!isRepositioned && object) {
             lastIntersected = object;
-            const properties = objectProperties[cleanString(object.name)];
+            const properties = objectProperties[getInteractionId(object)];
             if (properties && properties.reposition) {
                 repositionCamera(object);
             } else if (properties && properties.action) {
@@ -438,7 +459,7 @@ export function createInteractionHandler(camera, interactiveObjects, controls, a
             returnToOriginalPosition();
             setTimeout(() => {
                 lastIntersected = object;
-                const properties = objectProperties[cleanString(object.name)];
+                const properties = objectProperties[getInteractionId(object)];
                 if (properties && properties.reposition) {
                     repositionCamera(object);
                 } else if (properties && properties.action) {

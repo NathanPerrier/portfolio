@@ -71,15 +71,20 @@ export class ArcadeScreenTexture {
         if (!screenMesh) {
             const geometry = new THREE.PlaneGeometry(1.28, 0.48);
             screenMesh = new THREE.Mesh(geometry, new THREE.MeshBasicMaterial({
-                map: this.texture, side: THREE.FrontSide
+                map: this.texture,
+                color: 0xffffff,
+                side: THREE.FrontSide,
+                toneMapped: false
             }));
             screenMesh.position.set(0, .875, .7475);
             screenMesh.rotation.x = -0.4;
             arcadeMesh.add(screenMesh);
         } else {
             screenMesh.material = new THREE.MeshBasicMaterial({
-                map: this.texture, side: THREE.FrontSide,
-                emissive: new THREE.Color(0x222222), emissiveIntensity: 0.5
+                map: this.texture,
+                color: 0xffffff,
+                side: THREE.FrontSide,
+                toneMapped: false
             });
         }
 

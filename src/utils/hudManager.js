@@ -85,8 +85,9 @@ class HudManager {
   }
   
   addInteraction(objectName) {
-    if (!this.interactedObjects.has(cleanString(objectName))) {
-      this.interactedObjects.add(objectName);
+    const interactionId = cleanString(objectName);
+    if (!this.interactedObjects.has(interactionId)) {
+      this.interactedObjects.add(interactionId);
       this.updateProgress();
       
       // Play a sound effect if available
@@ -103,7 +104,7 @@ class HudManager {
       : 0;
     
     this.progressBar.value = Math.min(progress, 100);
-    this.progressText.textContent = `${Math.min(this.interactedObjects.size, 8)}/${this.totalInteractables}`;
+    this.progressText.textContent = `${Math.min(this.interactedObjects.size, this.totalInteractables)}/${this.totalInteractables}`;
     
     // Achievement check
     if (this.interactedObjects.size === this.totalInteractables && this.totalInteractables > 0) {

@@ -102,15 +102,14 @@ export class TVGifTexture {
         }
         
         if (!screenMesh) {
-            console.warn('Could not find screen mesh in TV model, creating one');
+            // The CRT display is supplied as a separate plane when the model
+            // does not expose a named screen mesh.
             const geometry = new THREE.PlaneGeometry(1.24, 1.5); // 19:23 aspect ratio matching 380x460
             const material = new THREE.MeshBasicMaterial({
                 map: this.texture,
                 color: 0xffffff,
                 side: THREE.DoubleSide, // Visible from both sides
-                emissive: new THREE.Color(0xff0000),
-                emissiveIntensity: 40,
-                emissiveMap: this.texture
+                toneMapped: false
             });
             
             screenMesh = new THREE.Mesh(geometry, material);
@@ -123,9 +122,6 @@ export class TVGifTexture {
                 map: this.texture,
                 color: 0xffffff,
                 side: THREE.DoubleSide,
-                emissive: new THREE.Color(0xffffff),
-                emissiveIntensity: 40.0,
-                emissiveMap: this.texture,
                 toneMapped: false  // Prevents tone mapping from dimming the emission
             });
         }
@@ -144,7 +140,7 @@ export class TVGifTexture {
         const sampleSize = 16; // Reduced from 32 for better performance
         sampleCanvas.width = sampleSize;
         sampleCanvas.height = sampleSize;
-        const sampleCtx = sampleCanvas.getContext('2d');
+        const sampleCtx = sampleCanvas.getContext('2d', { willReadFrequently: true });
         
         let frameCount = 0;
         const SAMPLE_RATE = 4; // Sample every 4th frame (15 FPS instead of 60 FPS)

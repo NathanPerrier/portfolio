@@ -1,13 +1,54 @@
 const cursor = document.querySelector(".custom-cursor");
 export const frameImage = document.getElementById("frame");
+const cursorHome = cursor?.parentElement;
+let cursorModal = null;
+
+// A native modal dialog is painted in the browser's top layer, above every
+// regular z-index. Moving the decorative cursor into that dialog makes it a
+// member of the same layer while preserving the dialog's native focus trap.
+export function promoteCursorForDialog(dialog) {
+  if (!cursor || !dialog?.open || document.body.classList.contains('input-touch')) {
+    return;
+  }
+
+  if (cursorModal === dialog) {
+    return;
+  }
+
+  restoreCursorAfterDialog();
+  dialog.append(cursor);
+  cursorModal = dialog;
+}
+
+export function restoreCursorAfterDialog(dialog) {
+  if (!cursor || (dialog && cursorModal && cursorModal !== dialog)) {
+    return;
+  }
+
+  if (cursorHome?.isConnected) {
+    cursorHome.append(cursor);
+  }
+  cursorModal = null;
+}
 
 export function initCursor() {
   const canvas = document.createElement("canvas");
-  canvas.width = frameImage.naturalWidth;
-  canvas.height = frameImage.naturalHeight;
+  // The frame is rendered at viewport size. Sampling a viewport-sized copy
+  // preserves cursor collision accuracy without duplicating its 8K source
+  // bitmap in another full-resolution canvas.
+  const sampleWidth = Math.min(
+    frameImage.naturalWidth,
+    Math.max(1, Math.ceil(window.innerWidth * Math.min(window.devicePixelRatio || 1, 2)))
+  );
+  const sampleHeight = Math.max(
+    1,
+    Math.round(sampleWidth * (frameImage.naturalHeight / frameImage.naturalWidth))
+  );
+  canvas.width = sampleWidth;
+  canvas.height = sampleHeight;
 
-  const ctx = canvas.getContext("2d");
-  ctx.drawImage(frameImage, 0, 0);
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  ctx.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
 
   const cursor = document.querySelector(".custom-cursor");
 
@@ -43,9 +84,9 @@ export function initCursor() {
 }
 
 document.addEventListener('mousedown', () => {
-  cursor.classList.add('clicking');
+  cursor?.classList.add('clicking');
 });
 
 document.addEventListener('mouseup', () => {
-  cursor.classList.remove('clicking');
+  cursor?.classList.remove('clicking');
 });

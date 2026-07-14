@@ -3,7 +3,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" /> 
     <link rel="icon" type="image/png" href="/assets/icons/icon-iOS-TintedDark-1024x1024@2x.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
     <title>Nathan Perrier</title>
 
@@ -20,6 +20,7 @@
     <meta itemprop="image" content="/assets/images/preview.png">
 
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
 
     <!-- twitter -->
     <meta name="twitter:card" content="summary_large_image">
@@ -36,35 +37,143 @@
     <meta property="og:site_name" content="Nathan Perrier">
     <meta property="og:locale" content="en_AU">
 
+    <style>
+      /* Critical first-paint layout. The full visual stylesheet is loaded by
+         the app bundle, but these rules prevent a visible default-HTML jump. */
+      html, body {
+        width: 100%;
+        min-height: 100%;
+        margin: 0;
+        background: #000;
+      }
+
+      #loading-screen,
+      #frame,
+      #bg,
+      #css-renderer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      #ui-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+      }
+
+      #loading-screen {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #000;
+        color: #fff;
+        z-index: 100;
+      }
+
+      #frame {
+        width: 100vw;
+        height: 100vh;
+        object-fit: fill;
+        pointer-events: none;
+        z-index: 101;
+      }
+
+      #bg {
+        width: 100vw;
+        height: 100vh;
+        z-index: 3;
+      }
+
+      #css-renderer {
+        pointer-events: none;
+        z-index: 9;
+      }
+
+      #ui-container {
+        pointer-events: none;
+        opacity: 0;
+        z-index: 11;
+      }
+    </style>
+
     <link rel="preload" as="image" href="/assets/images/frame.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
   </head>
   <body>
-    <div id="loading-screen">
-      <div id="loading-text"></div>
+    <noscript>
+      <style>
+        body > :not(noscript) {
+          display: none !important;
+        }
+        .no-script-fallback {
+          box-sizing: border-box;
+          display: grid;
+          min-height: 100vh;
+          padding: 2rem;
+          place-items: center;
+          background: #111;
+          color: #f4f4f4;
+          font-family: system-ui, sans-serif;
+        }
+        .no-script-fallback__content {
+          max-width: 42rem;
+          padding: 2rem;
+          border: 2px solid currentColor;
+        }
+        .no-script-fallback a {
+          display: inline-block;
+          margin: 0.5rem 0.5rem 0 0;
+          padding: 0.75rem 1rem;
+          border: 2px solid currentColor;
+          color: inherit;
+          font-weight: 700;
+          text-decoration: none;
+        }
+      </style>
+      <main class="no-script-fallback">
+        <div class="no-script-fallback__content">
+          <h1>Nathan Perrier</h1>
+          <p>The interactive 3D portfolio needs JavaScript. You can still browse the accessible portfolio or open the terminal experience.</p>
+          <a href="/portfolio/">Browse the portfolio</a>
+          <a href="/terminal/">Open the terminal</a>
+        </div>
+      </main>
+    </noscript>
+
+    <div id="loading-screen" role="region" aria-label="Loading the interactive portfolio">
+      <div id="loading-content">
+        <div id="loading-text" role="status" aria-live="polite"></div>
+        <a id="loading-fallback-link" class="nes-btn" href="/portfolio/">Browse the standard portfolio</a>
+      </div>
     </div>
 
-    <div id="crosshair"></div>
+    <div id="crosshair" aria-hidden="true"></div>
 
-    <div id="mouse-container"></div>
+    <div id="mouse-container" aria-hidden="true"></div>
 
-    <img id="frame" src="/assets/images/frame.png" alt="frame" />
+    <img id="frame" src="/assets/images/frame.png" alt="" aria-hidden="true" />
 
-    <canvas id="bg"></canvas>
+    <canvas id="bg" tabindex="0" aria-describedby="scene-instructions" aria-label="Interactive 3D portfolio"></canvas>
+    <p class="sr-only" id="scene-instructions">Select the scene to explore Nathan Perrier's 3D portfolio. On a keyboard, use W A S D or the arrow keys to move and Escape to release mouse control. On touch devices, use the movement joystick and drag the scene to look around.</p>
 
     <!-- Virtual joystick (touch devices only, shown via body.input-touch) -->
-    <div id="joystick-zone">
+    <div id="joystick-zone" role="group" aria-label="Touch movement joystick">
       <div id="joystick-base">
-        <div id="joystick-thumb"></div>
+        <div id="joystick-thumb" aria-hidden="true"></div>
       </div>
     </div>
 
     <div id="css-renderer">
           
     </div>
-    <div id="ui-container">
+    <div id="ui-container" role="region" aria-label="Portfolio controls">
       <div id="ui-padding">
         <!-- Top-right score display -->
         <div class="nes-container is-rounded score-display" id="score-display">
@@ -78,32 +187,34 @@
           </div>
         </div>
 
-        <!-- Top-left progress bar -->
-        <div class="nes-container is-rounded progress-display" id="progress-display">
-          <span class="progress-label">EXPLORATION</span>
-          <div class="progress-bar-container">
-            <progress class="nes-progress is-success" id="exploration-progress" value="0" max="100"></progress>
-            <span class="progress-text" id="progress-text">0/8</span>
+        <div id="exploration-hud">
+          <!-- Top-left progress bar -->
+          <div class="nes-container is-rounded progress-display" id="progress-display">
+            <span class="progress-label" id="progress-label">EXPLORATION</span>
+            <div class="progress-bar-container">
+              <progress class="nes-progress is-success" id="exploration-progress" value="0" max="100" aria-labelledby="progress-label" aria-describedby="progress-text"></progress>
+              <span class="progress-text" id="progress-text" aria-live="polite">0/8</span>
+            </div>
+          </div>
+
+          <div id="achievement-container" role="status" aria-live="polite" aria-atomic="true">
+            <div class="nes-balloon left achievement-balloon" id="achievement-popup">
+              <div class="achievement-content">
+                <h3 class="achievement-title" id="achievement-title">
+                  <span class="achievement-icon" id="achievement-icon">🏆</span>
+                  <span id="achievement-title-text">Achievement Unlocked!</span>
+                </h3>
+                <p class="achievement-description" id="achievement-description">You discovered something!</p>
+              </div>
+            </div>
           </div>
         </div>
 
         <!-- put whiteboard buttons here -->
         <div id="ui-content"></div>
 
-        <div id="achievement-container">
-          <div class="nes-balloon left achievement-balloon" id="achievement-popup">
-            <div class="achievement-content">
-              <h3 class="achievement-title" id="achievement-title">
-                <span class="achievement-icon" id="achievement-icon">🏆</span>
-                <span id="achievement-title-text">Achievement Unlocked!</span>
-              </h3>
-              <p class="achievement-description" id="achievement-description">You discovered something!</p>
-            </div>
-          </div>
-        </div>
-
         <!-- Back button -->
-        <button type="button" class="nes-btn back-btn" id="back-button">
+        <button type="button" class="nes-btn back-btn" id="back-button" aria-label="Return to the room">
           <i class="nes-icon close"></i>
           <span>BACK</span>
         </button>
@@ -111,19 +222,19 @@
         <!-- Bottom navbar -->
         <div class="nes-container navbar-display" id="navbar-display">
           <div class="navbar-links">
-            <button type="button" class="nes-btn is-outline nav-btn" id="terminal-btn">
+            <button type="button" class="nes-btn is-outline nav-btn" id="terminal-btn" aria-label="Open the terminal">
               <div class="nav-btn-content">
                 <i class="nes-icon terminal" style="margin-right: 24px;">></i>
                 <span>TERMINAL</span>
               </div>
             </button>
-            <button type="button" class="nes-btn is-outline nav-btn" id="projects-btn">
+            <button type="button" class="nes-btn is-outline nav-btn" id="projects-btn" aria-label="Open projects">
               <div class="nav-btn-content">
                 <i class="nes-icon trophy" style="margin-right: 24px;"></i>
                 <span>PROJECTS</span>
               </div>
             </button>
-            <button type="button" class="nes-btn nav-btn " id="arcade-btn">
+            <button type="button" class="nes-btn nav-btn " id="arcade-btn" aria-label="Open the arcade">
               <div class="nav-btn-content">
                 <i class="nes-icon coin" style="margin-right: 24px;"></i>
                 <!-- <i class="nes-logo"></i> -->
@@ -137,29 +248,30 @@
 
     <div id="hud-ui">
       <div id="hud-padding">
-        <dialog class="nes-dialog is-dark is-rounded" id="hud-dialog">
+        <dialog class="nes-dialog is-dark is-rounded" id="hud-dialog" aria-labelledby="dialog-title-1" aria-describedby="dialog-description-1">
           <form method="dialog">
             <div class="dialog-page" id="dialog-page-1">
-              <h1 class="title">Welcome!</h1>
-              <p>Thank you for checking out my project, I hope you enjoy exploring it! Feel free to check out the source code on my <a href="https://github.com/nathanperrier" target="_blank">Github page</a>!</p>
+              <h1 class="title" id="dialog-title-1">Welcome!</h1>
+              <p id="dialog-description-1">Thank you for checking out my project, I hope you enjoy exploring it! Feel free to check out the source code on my <a href="https://github.com/nathanperrier" target="_blank" rel="noopener noreferrer">Github page</a>!</p>
             </div>
             <div class="dialog-page hidden" id="dialog-page-2">
-              <h1 class="title">Controls</h1>
-              <p id="dialog-controls-text">Use WASD to move and mouse to look around or just scroll on mobile devices. To begin control, simply press on the screen and to exit just press escape.</p>
+              <h1 class="title" id="dialog-title-2">Controls</h1>
+              <p id="dialog-description-2"><span id="dialog-controls-text">Use W, A, S, D or the arrow keys to move and the mouse to look around. Click the scene to begin, and press Escape to release mouse control.</span></p>
             </div>
             <div class="dialog-page hidden" id="dialog-page-3">
-              <h1 class="title">Interactions</h1>
-              <p id="dialog-interactions-text">Some objects in the room are interactable. These are indicated by the white outline when your crosshair is on it. Simply click on the object when the white outline is present to interact with the object.</p>
+              <h1 class="title" id="dialog-title-3">Interactions</h1>
+              <p id="dialog-description-3"><span id="dialog-interactions-text">Some objects in the room are interactable. These are indicated by the white outline when your crosshair is on it. Simply click on the object when the white outline is present to interact with the object.</span></p>
             </div>
             <div class="dialog-page hidden" id="dialog-page-4">
-              <h1 class="title">Audio</h1>
-              <p>This site uses direction music and sound effects, so headphones are advisded. If you wish to mute the music just press on the radio on the desk.</p>
+              <h1 class="title" id="dialog-title-4">Audio</h1>
+              <p id="dialog-description-4">This site uses directional audio and sound effects, so headphones are advised. If you wish to mute the music, press the radio on the desk.</p>
             </div>
+            <p class="sr-only" id="dialog-page-status" aria-live="polite" aria-atomic="true"></p>
             <menu class="dialog-menu">
-              <button type="button" class="nes-btn" id="dialog-next-btn">Next</button>
-              <button type="button" class="nes-btn" id="dialog-prev-btn">Prev</button>
+              <button type="button" class="nes-btn" id="dialog-next-btn" aria-label="Next welcome step">Next</button>
+              <button type="button" class="nes-btn" id="dialog-prev-btn" aria-label="Previous welcome step">Prev</button>
               <div id="close">
-                <button type="submit" class="nes-btn is-primary" id="dialog-close-btn">Close</button>
+                <button type="submit" class="nes-btn is-primary" id="dialog-close-btn" value="close">Close</button>
               </div>
             </menu>
           </form>
@@ -169,14 +281,14 @@
     
     <div id="timeout-ui">
       <div id="timeout-padding">
-        <dialog class="nes-dialog is-dark is-rounded" id="timeout-dialog">
+        <dialog class="nes-dialog is-dark is-rounded" id="timeout-dialog" aria-labelledby="timeout-dialog-title" aria-describedby="timeout-dialog-description">
           <form method="dialog">
-              <h1 class="title">Error Loading Scene</h1>
-              <p>The scene is taking a long time to load. Please try refreshing.</p>
+              <h1 class="title" id="timeout-dialog-title">Error Loading Scene</h1>
+              <p id="timeout-dialog-description">The scene is taking a long time to load. Please try refreshing.</p>
       
               <div class="dialog-buttons">
-                <button type="button" class="nes-btn is-primary" onclick="location.reload()">Refresh</button>
-                <button type="button" class="nes-btn" onclick="window.location.href='https://projects.nathanperrier.dev'">Alternative Site</button>
+                <button type="button" class="nes-btn is-primary" id="refresh-scene-btn">Refresh</button>
+                <a class="nes-btn" href="/portfolio/">Browse the standard portfolio</a>
               </div>
           </form>
         </dialog>
@@ -185,18 +297,18 @@
 
     <div id="device-ui">
       <div id="device-padding">
-        <dialog class="nes-dialog is-dark is-rounded" id="device-dialog">
+        <dialog class="nes-dialog is-dark is-rounded" id="device-dialog" aria-labelledby="device-dialog-title" aria-describedby="device-dialog-description">
           <form method="dialog">
-              <h1 class="title">Incompatible Device</h1>
-              <p>This website requires a mouse and keyboard, please use a laptop or desktop.</p>
+              <h1 class="title" id="device-dialog-title">Browse the standard portfolio</h1>
+              <p id="device-dialog-description">The standard portfolio works without the 3D experience.</p>
               
-              <button type="button" class="nes-btn is-primary" onclick="window.location.href='https://projects.nathanperrier.dev'">Visit Alternative Site</button>
+              <a class="nes-btn is-primary" href="/portfolio/">Browse portfolio</a>
           </form>
         </dialog>
       </div>
     </div>
 
-    <div class="custom-cursor"></div>
+    <div class="custom-cursor" aria-hidden="true"></div>
 
     <script type="module" src="/src/main.js"></script>
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-4NFRXM7RJB"></script>

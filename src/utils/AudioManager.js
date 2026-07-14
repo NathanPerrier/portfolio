@@ -13,6 +13,7 @@ class AudioManager {
     this.volume = .8;
     this.musicVolume = 1;
     this.effectsVolume = 0.4;
+    this.effectSoundsPromise = null;
     
     // Radio track selection
     this.radioTrackSelected = false;
@@ -129,7 +130,11 @@ class AudioManager {
     });
   }
   
-  async loadEffectSounds() {
+  loadEffectSounds() {
+    if (this.effectSoundsPromise) {
+      return this.effectSoundsPromise;
+    }
+
     // Load commonly used sound effects
     const effectsToLoad = [
       { name: 'button_press', file: '09_select1.wav' },
@@ -147,7 +152,12 @@ class AudioManager {
       this.loadSound(import.meta.env.BASE_URL + `assets/audio/effects/${file}`, name)
     );
     
-    await Promise.all(promises);
+    this.effectSoundsPromise = Promise.all(promises).catch((error) => {
+      this.effectSoundsPromise = null;
+      throw error;
+    });
+
+    return this.effectSoundsPromise;
   }
   
   playSound(soundName, volume = null) {
@@ -322,10 +332,8 @@ class AudioManager {
     }
   }
   
-  toggleRadio(radioKey) {    
-    // Always use radio_interactive_2 as the key since that's where the audio is attached
-    const audioKey = 'radio_interactive_2';
-    const audio = this.positionalAudios.get(audioKey);
+  toggleRadio() {
+    const audio = this.currentRadioAudio;
     
     if (audio) {
       if (audio.isPlaying) {
@@ -343,7 +351,7 @@ class AudioManager {
         return true;
       }
     } else {
-      console.warn(`No audio found for radio key: ${audioKey}`);
+      console.warn('No radio audio is available yet');
     }
     return false;
   }

@@ -1,6 +1,19 @@
 import * as THREE from 'three';
-import html2canvas from 'html2canvas';
 import { device } from '../../utils/device.js';
+
+let html2canvasPromise;
+// `Symbol.for` intentionally survives a Vite module replacement. The mouse
+// input overlay is a shared DOM node, while ComputerTexture instances can be
+// recreated during a scene/HMR restart.
+const MOUSE_INPUT_OWNER = Symbol.for('portfolio.computerTexture.mouseInputOwner');
+
+function loadHtml2Canvas() {
+    if (!html2canvasPromise) {
+        html2canvasPromise = import('html2canvas').then(({ default: html2canvas }) => html2canvas);
+    }
+
+    return html2canvasPromise;
+}
 
 export class ComputerTexture {
     constructor(config = {}) {
@@ -12,11 +25,11 @@ export class ComputerTexture {
             screenWidth: config.screenWidth || 1.9,
             screenHeight: config.screenHeight || 1.65,
             screenPosition: config.screenPosition || { x: 0, y: 0.7, z: 1 },
-            emissiveColor: config.emissiveColor || 0x00ff00,
-            emissiveIntensity: config.emissiveIntensity || 15,
             enableKeyboard: config.enableKeyboard || false,
             enableMouse: config.enableMouse || false,
-            backgroundColor: config.backgroundColor || '#000'
+            backgroundColor: config.backgroundColor || '#000',
+            iframeTitle: config.iframeTitle || 'Off-screen computer screen content',
+            placeholderText: config.placeholderText || 'CLICK TO OPEN'
         };
         
         this.canvas = null;
@@ -33,12 +46,56 @@ export class ComputerTexture {
         this.isMouseActive = false;
         this.mouseOverlay = null;
         this.mouseContainer = null;
+        this.mouseInputController = null;
+        this.mouseScrollProxy = null;
+        this.lastMouseScrollTop = 0;
+        this.iframeScrollTarget = null;
+        this.iframeResizeObserver = null;
+        this.iframeScrollHandler = () => this.syncMouseScrollPosition();
         this.isRendering = false;
         this.lastRenderTime = 0;
         this.renderQueue = false;
         this.activationTimeout = null; // Track activation timeout
+        this.pendingInputActivation = false;
         this.touchKeyboardInput = null; // Hidden input that summons the virtual keyboard
         this.touchKeyboardButton = null;
+        this.messageTargetOrigin = window.location.origin;
+        this.iframeMessageHandler = this.handleIframeMessage.bind(this);
+    }
+
+    postToIframe(message) {
+        if (!this.iframe?.contentWindow) return;
+        this.iframe.contentWindow.postMessage(message, this.messageTargetOrigin);
+    }
+
+    handleIframeMessage(event) {
+        if (
+            event.origin !== this.messageTargetOrigin ||
+            event.source !== this.iframe?.contentWindow ||
+            !event.data ||
+            typeof event.data !== 'object' ||
+            event.data.type !== 'portfolio:open-external-link' ||
+            typeof event.data.href !== 'string'
+        ) {
+            return;
+        }
+
+        this.openExternalLink(event.data.href);
+    }
+
+    openExternalLink(href) {
+        let url;
+
+        try {
+            url = new URL(href, window.location.href);
+        } catch {
+            return;
+        }
+
+        if (!['http:', 'https:', 'mailto:'].includes(url.protocol)) return;
+
+        const openedWindow = window.open(url.href, '_blank', 'noopener,noreferrer');
+        if (openedWindow) openedWindow.opener = null;
     }
 
     // Virtual keyboards only open from a direct user gesture, so touch devices
@@ -127,6 +184,15 @@ export class ComputerTexture {
             this.touchKeyboardButton = null;
         }
     }
+
+    createScreenMaterial() {
+        return new THREE.MeshBasicMaterial({
+            map: this.texture,
+            color: 0xffffff,
+            side: THREE.DoubleSide,
+            toneMapped: false
+        });
+    }
     
     init(computerMesh) {
         // Create off-screen canvas for rendering website
@@ -138,6 +204,7 @@ export class ComputerTexture {
         this.texture = new THREE.CanvasTexture(this.canvas);
         this.texture.minFilter = THREE.LinearFilter;
         this.texture.magFilter = THREE.LinearFilter;
+        this.drawIdleScreen();
         
         // Find the screen mesh in the computer model
         let screenMesh = null;
@@ -153,20 +220,14 @@ export class ComputerTexture {
                     name.includes('display') ||
                     name.includes('monitor')) {
                     screenMesh = child;
-                    console.log('Found screen mesh by name:', child.name);
                 }
             }
         });
         
         // If no screen found by name, look for one by position/size
         if (!screenMesh && meshes.length > 0) {
-            console.log('Computer terminal meshes found:', meshes.map(m => m.name));
-            
             // Find a mesh that's positioned like a screen
             for (const mesh of meshes) {
-                const worldPos = new THREE.Vector3();
-                mesh.getWorldPosition(worldPos);
-                
                 // Check if mesh is positioned like a monitor screen
                 const box = new THREE.Box3().setFromObject(mesh);
                 const size = box.getSize(new THREE.Vector3());
@@ -176,22 +237,16 @@ export class ComputerTexture {
                     size.y > 0.3 && size.y < 1.5 && 
                     size.z < 0.3) {
                     screenMesh = mesh;
-                    console.log('Found potential screen mesh:', mesh.name, 'at position:', worldPos);
                     break;
                 }
             }
         }
         
         if (!screenMesh) {
-            console.warn('Could not find screen mesh in computer model, creating one');
-            // Create a screen mesh with configured dimensions
+            // The exported model intentionally uses a separate bezel rather
+            // than a named display mesh, so add the display plane here.
             const geometry = new THREE.PlaneGeometry(this.config.screenWidth, this.config.screenHeight);
-            const material = new THREE.MeshBasicMaterial({
-                map: this.texture,
-                side: THREE.DoubleSide,
-                emissive: new THREE.Color(this.config.emissiveColor),
-                emissiveIntensity: this.config.emissiveIntensity
-            });
+            const material = this.createScreenMaterial();
             screenMesh = new THREE.Mesh(geometry, material);
             // Position the screen relative to computer
             screenMesh.position.set(
@@ -204,19 +259,11 @@ export class ComputerTexture {
         } else {
             // Replace the screen mesh's material with our texture
             this.originalMaterial = screenMesh.material;
-            screenMesh.material = new THREE.MeshBasicMaterial({
-                map: this.texture,
-                side: THREE.DoubleSide,
-                emissive: new THREE.Color(this.config.emissiveColor),
-                emissiveIntensity: this.config.emissiveIntensity
-            });
+            screenMesh.material = this.createScreenMaterial();
         }
         
         this.screenMesh = screenMesh;
         this.material = screenMesh.material;
-        
-        // Create hidden iframe for rendering HTML
-        this.createIframe();
         
         // Create input proxy only if keyboard is enabled
         if (this.config.enableKeyboard) {
@@ -224,10 +271,18 @@ export class ComputerTexture {
         }
     }
     
-    createIframe() {
-        // Create a hidden iframe
+    ensureIframe() {
+        if (this.iframe) return;
+
+        // The embedded sites and html2canvas work are deferred until the
+        // visitor actually approaches a computer. They are not needed to
+        // render the room's opening view.
         this.iframe = document.createElement('iframe');
         this.iframe.src = this.config.src;
+        this.iframe.title = this.config.iframeTitle;
+        this.iframe.setAttribute('aria-hidden', 'true');
+        this.iframe.tabIndex = -1;
+        this.iframe.setAttribute('inert', '');
         this.iframe.style.position = 'absolute';
         this.iframe.style.left = '-9999px';
         this.iframe.style.width = this.config.width + 'px';
@@ -243,13 +298,101 @@ export class ComputerTexture {
         // Render once the iframe content is actually ready
         this.iframe.addEventListener('load', () => {
             this.iframeLoaded = true;
+            this.attachIframeScrollListener();
+            this.observeIframeLayout();
+            this.syncMouseScrollPosition();
             if (this.isActive) {
                 // Small delay lets the page finish painting before capture
                 setTimeout(() => this.renderIframeToCanvas(), 300);
             }
+
+            if (this.pendingInputActivation && this.isActive) {
+                this.pendingInputActivation = false;
+                this.scheduleActivation(0);
+            }
         });
 
+        window.addEventListener('message', this.iframeMessageHandler);
         document.body.appendChild(this.iframe);
+    }
+
+    getIframeScrollRoot() {
+        return this.iframe?.contentWindow?.document.scrollingElement || null;
+    }
+
+    attachIframeScrollListener() {
+        const iframeWindow = this.iframe?.contentWindow;
+        if (!iframeWindow || this.iframeScrollTarget === iframeWindow) return;
+
+        this.iframeScrollTarget?.removeEventListener('scroll', this.iframeScrollHandler);
+        // Document scrolling is dispatched on its Window, rather than the
+        // documentElement, in the browsers we support.
+        iframeWindow.addEventListener('scroll', this.iframeScrollHandler, { passive: true });
+        this.iframeScrollTarget = iframeWindow;
+    }
+
+    observeIframeLayout() {
+        this.iframeResizeObserver?.disconnect();
+        this.iframeResizeObserver = null;
+
+        const iframeDoc = this.iframe?.contentDocument;
+        if (!iframeDoc || typeof ResizeObserver === 'undefined') return;
+
+        this.iframeResizeObserver = new ResizeObserver(() => {
+            this.syncMouseScrollPosition();
+        });
+        this.iframeResizeObserver.observe(iframeDoc.documentElement);
+        if (iframeDoc.body && iframeDoc.body !== iframeDoc.documentElement) {
+            this.iframeResizeObserver.observe(iframeDoc.body);
+        }
+    }
+
+    // The overlay is intentionally a real scroll container. Browsers already
+    // apply the visitor's OS/natural-scroll preference to native scrollTop;
+    // mirroring that delta avoids guessing what a raw WheelEvent delta means.
+    syncMouseScrollPosition() {
+        if (
+            !this.isMouseActive ||
+            !this.mouseContainer ||
+            !this.mouseScrollProxy ||
+            this.mouseContainer.clientHeight === 0
+        ) {
+            return;
+        }
+
+        const scrollRoot = this.getIframeScrollRoot();
+        if (!scrollRoot) return;
+
+        const maxIframeScroll = Math.max(0, scrollRoot.scrollHeight - scrollRoot.clientHeight);
+        const proxyHeight = this.mouseContainer.clientHeight + Math.max(1, maxIframeScroll);
+        this.mouseScrollProxy.style.height = `${proxyHeight}px`;
+
+        const nextScrollTop = Math.min(maxIframeScroll, Math.max(0, scrollRoot.scrollTop));
+        // Set this before assigning scrollTop because a browser may synchronously
+        // dispatch the overlay's scroll event for a programmatic synchronisation.
+        this.lastMouseScrollTop = nextScrollTop;
+        this.mouseContainer.scrollTop = nextScrollTop;
+    }
+
+    handleMouseContainerScroll() {
+        if (!this.mouseContainer) return;
+
+        const nextScrollTop = this.mouseContainer.scrollTop;
+        const scrollDelta = nextScrollTop - this.lastMouseScrollTop;
+        this.lastMouseScrollTop = nextScrollTop;
+        if (!scrollDelta) return;
+
+        const scrollRoot = this.getIframeScrollRoot();
+        if (!scrollRoot) return;
+
+        const previousScrollBehavior = scrollRoot.style.scrollBehavior;
+        scrollRoot.style.scrollBehavior = 'auto';
+        scrollRoot.scrollTop += scrollDelta;
+        scrollRoot.style.scrollBehavior = previousScrollBehavior;
+
+        if (this.isActive) {
+            this.renderIframeToCanvas();
+        }
     }
     
     startPreviewMode() {
@@ -306,7 +449,7 @@ export class ComputerTexture {
     
     renderIframeToCanvas() {
         // Bail out until the iframe has fired its load event
-        if (!this.iframeLoaded) return;
+        if (!this.iframeLoaded || !this.iframe) return;
 
         // Prevent overlapping renders
         if (this.isRendering) {
@@ -318,7 +461,8 @@ export class ComputerTexture {
 
         try {
             // Access iframe document
-            const iframeDoc = this.iframe.contentDocument || this.iframe.contentWindow.document;
+            const iframeWindow = this.iframe.contentWindow;
+            const iframeDoc = this.iframe.contentDocument || iframeWindow.document;
 
             if (!iframeDoc || !iframeDoc.body) {
                 console.warn('Iframe document not accessible');
@@ -326,10 +470,25 @@ export class ComputerTexture {
                 return;
             }
             
-            // Use html2canvas with optimized settings
-            html2canvas(iframeDoc.body, {
+            // Capture the iframe's visible viewport rather than the top of its
+            // full document. Without the crop coordinates, a scrolled website
+            // can render an offset/static image on the 3D display.
+            const scrollX = iframeWindow.scrollX;
+            const scrollY = iframeWindow.scrollY;
+
+            // Load html2canvas only when a screen needs a live preview.
+            loadHtml2Canvas().then((html2canvas) => html2canvas(iframeDoc.body, {
                 width: this.config.width,
                 height: this.config.height,
+                windowWidth: iframeWindow.innerWidth,
+                windowHeight: iframeWindow.innerHeight,
+                // Keep the cloned document at its origin, then crop the
+                // current iframe viewport below. Supplying its scroll offset
+                // here as well would cancel the crop and redraw the top.
+                scrollX: 0,
+                scrollY: 0,
+                x: scrollX,
+                y: scrollY,
                 backgroundColor: this.config.backgroundColor,
                 scale: 1, // Fixed scale for performance
                 logging: false,
@@ -337,8 +496,23 @@ export class ComputerTexture {
                 allowTaint: true,
                 imageTimeout: 0, // Disable image loading timeout
                 removeContainer: true, // Clean up after rendering
-                foreignObjectRendering: false // Faster rendering
-            }).then((canvasResult) => {
+                foreignObjectRendering: false, // Faster rendering
+                // NES.css draws its inset button shadow with an absolutely
+                // positioned ::after pseudo-element. html2canvas turns that
+                // pseudo-element into a real child and can paint it over the
+                // anchor's text when capturing a cropped/scrolled viewport.
+                // Hide only that capture clone; the live iframe keeps its
+                // normal NES button styling and the labels remain readable.
+                onclone: (clonedDocument) => {
+                    const captureStyle = clonedDocument.createElement('style');
+                    captureStyle.textContent = `
+                        .nes-btn > html2canvaspseudoelement.___html2canvas___pseudoelement_after {
+                            display: none !important;
+                        }
+                    `;
+                    clonedDocument.head.appendChild(captureStyle);
+                }
+            })).then((canvasResult) => {
                 // Draw the result to our texture canvas
                 const ctx = this.canvas.getContext('2d');
                 ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -376,6 +550,20 @@ export class ComputerTexture {
 
         this.texture.needsUpdate = true;
     }
+
+    drawIdleScreen() {
+        const ctx = this.canvas.getContext('2d');
+        ctx.fillStyle = '#080808';
+        ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+        ctx.strokeStyle = '#92cc41';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(24, 24, this.canvas.width - 48, this.canvas.height - 48);
+        ctx.fillStyle = '#f4f4f4';
+        ctx.font = 'bold 32px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(this.config.placeholderText, this.canvas.width / 2, this.canvas.height / 2);
+        this.texture.needsUpdate = true;
+    }
     
     drawErrorScreen(error) {
         const ctx = this.canvas.getContext('2d');
@@ -398,6 +586,7 @@ export class ComputerTexture {
         if (this.isActive) return;
         
         this.isActive = true;
+        this.ensureIframe();
 
         // Start preview mode with 10-second updates
         this.startPreviewMode();
@@ -408,13 +597,43 @@ export class ComputerTexture {
         
         // Create the mouse container overlay
         this.mouseContainer = document.getElementById('mouse-container');
+        if (!this.mouseContainer) return;
+
+        // A scene restart can create a new ComputerTexture around the same
+        // overlay. Abort only the prior ComputerTexture listeners, leaving
+        // any unrelated listeners on the element untouched.
+        this.mouseContainer[MOUSE_INPUT_OWNER]?.abort();
+        this.mouseInputController = new AbortController();
+        this.mouseContainer[MOUSE_INPUT_OWNER] = this.mouseInputController;
+        const listenerOptions = { signal: this.mouseInputController.signal };
+
         this.mouseContainer.style.position = 'absolute';
         this.mouseContainer.style.opacity = '0';
-        this.mouseContainer.style.zIndex = '999';
+        // Keep the website input layer above the 3D renderers but below the
+        // HUD. Otherwise it consumes the visible BACK/navigation buttons.
+        this.mouseContainer.style.zIndex = '10';
         this.mouseContainer.style.backgroundColor = '#000';
         this.mouseContainer.style.cursor = 'none';
         this.mouseContainer.style.display = 'none'; // Initially hidden
         this.mouseContainer.style.pointerEvents = 'auto';
+        this.mouseContainer.style.overflowX = 'hidden';
+        this.mouseContainer.style.overflowY = 'auto';
+        this.mouseContainer.style.overscrollBehaviorY = 'contain';
+        this.mouseContainer.style.scrollBehavior = 'auto';
+        this.mouseContainer.style.scrollbarWidth = 'none';
+        this.mouseContainer.style.msOverflowStyle = 'none';
+
+        // This invisible spacer turns the input overlay into a native scroll
+        // surface. Its range is synchronised with the iframe when activated.
+        // Keep it non-interactive so click/move forwarding still targets the
+        // overlay itself.
+        this.mouseContainer.replaceChildren();
+        this.mouseScrollProxy = document.createElement('div');
+        this.mouseScrollProxy.setAttribute('aria-hidden', 'true');
+        this.mouseScrollProxy.style.width = '1px';
+        this.mouseScrollProxy.style.height = '1px';
+        this.mouseScrollProxy.style.pointerEvents = 'none';
+        this.mouseContainer.appendChild(this.mouseScrollProxy);
         
         // Add event listeners to forward events to iframe
         this.mouseContainer.addEventListener('click', (e) => {
@@ -432,12 +651,12 @@ export class ComputerTexture {
             const iframeY = y * scaleY;
             
             // Send click event to iframe
-            this.iframe.contentWindow.postMessage({
+            this.postToIframe({
                 type: 'click',
                 x: iframeX,
                 y: iframeY
-            }, '*');
-        });
+            });
+        }, listenerOptions);
         
         this.mouseContainer.addEventListener('mousemove', (e) => {
             if (!this.iframe || !this.iframe.contentWindow) return;
@@ -454,26 +673,24 @@ export class ComputerTexture {
             const iframeY = y * scaleY;
             
             // Send mousemove event to iframe
-            this.iframe.contentWindow.postMessage({
+            this.postToIframe({
                 type: 'mousemove',
                 x: iframeX,
                 y: iframeY
-            }, '*');
-        });
-        
+            });
+        }, listenerOptions);
+
+        this.mouseContainer.addEventListener('scroll', () => {
+            this.handleMouseContainerScroll();
+        }, listenerOptions);
+
         this.mouseContainer.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            if (!this.iframe || !this.iframe.contentWindow) return;
-            
-            // Get current scroll position and apply scroll
-            const currentY = this.iframe.contentWindow.scrollY || 0;
-            this.iframe.contentWindow.scrollTo(0, currentY - e.deltaY);
-            
-            // Force re-render after scroll
-            if (this.isActive) {
-                this.renderIframeToCanvas();
-            }
-        }, { passive: false });
+            // The first implementation used a bubble listener with inverted
+            // arithmetic. A browser that preserves the scene through HMR can
+            // still have that legacy listener attached. Stop it, but do not
+            // cancel this overlay's native default scroll action.
+            e.stopImmediatePropagation();
+        }, { ...listenerOptions, passive: true, capture: true });
         
         document.body.appendChild(this.mouseContainer);
     }
@@ -493,14 +710,14 @@ export class ComputerTexture {
         this.mouseContainer.style.left = '50%';
         this.mouseContainer.style.transform = 'translateX(-47.5%)';
         this.mouseContainer.style.top = '25vh';
-        this.mouseContainer.style.display = 'flex';
+        this.mouseContainer.style.display = 'block';
         
         // Send message to iframe content
-        if (this.iframe && this.iframe.contentWindow) {
-            this.iframe.contentWindow.postMessage('activateMouse', '*');
-        }
+        this.postToIframe('activateMouse');
         
         this.isMouseActive = true;
+        this.attachIframeScrollListener();
+        this.syncMouseScrollPosition();
 
         // Touch users get a direct link in case iframe tap forwarding is clunky
         if (device.isTouchPrimary) {
@@ -519,7 +736,7 @@ export class ComputerTexture {
             this.openSiteButton.type = 'button';
             this.openSiteButton.className = 'nes-btn is-primary open-site-btn';
             this.openSiteButton.textContent = 'OPEN SITE';
-            this.openSiteClickHandler = () => window.open(this.config.src, '_blank');
+            this.openSiteClickHandler = () => this.openExternalLink(this.config.src);
             this.openSiteButton.addEventListener('click', this.openSiteClickHandler);
             document.body.appendChild(this.openSiteButton);
         }
@@ -546,13 +763,12 @@ export class ComputerTexture {
         // Hide mouse container
         if (this.mouseContainer) {
             this.mouseContainer.style.display = 'none';
+            this.lastMouseScrollTop = 0;
         }
         this.hideOpenSiteButton();
         
         // Send message to iframe content
-        if (this.iframe && this.iframe.contentWindow) {
-            this.iframe.contentWindow.postMessage('deactivateMouse', '*');
-        }
+        this.postToIframe('deactivateMouse');
         
         this.isMouseActive = false;
         
@@ -566,6 +782,7 @@ export class ComputerTexture {
         if (!this.isActive) return;
         
         this.isActive = false;
+        this.pendingInputActivation = false;
         
         // Deactivate keyboard input if enabled
         if (this.config.enableKeyboard && this.isInputActive) {
@@ -584,9 +801,7 @@ export class ComputerTexture {
         }
         
         // Send deactivation message to iframe
-        if (this.iframe && this.iframe.contentWindow) {
-            this.iframe.contentWindow.postMessage('deactivate', '*');
-        }
+        this.postToIframe('deactivate');
         
         // Stop rendering updates
         if (this.updateInterval) {
@@ -611,9 +826,7 @@ export class ComputerTexture {
         }
         
         // Only deactivate keyboard input, keep screen visible
-        if (this.iframe && this.iframe.contentWindow) {
-            this.iframe.contentWindow.postMessage('deactivate', '*');
-        }
+        this.postToIframe('deactivate');
         this.isInputActive = false;
 
         // Remove keyboard listeners properly
@@ -730,9 +943,7 @@ export class ComputerTexture {
         }
         
         // Send activation message to iframe
-        if (this.iframe && this.iframe.contentWindow) {
-            this.iframe.contentWindow.postMessage('activate', '*');
-        }
+        this.postToIframe('activate');
         
         // Switch to full rendering mode when input is activated
         if (this.isActive) {
@@ -743,6 +954,12 @@ export class ComputerTexture {
     // Method to schedule delayed activation
     scheduleActivation(delay = 500) {
         if (!this.config.enableKeyboard) return;
+
+        this.ensureIframe();
+        if (!this.iframeLoaded) {
+            this.pendingInputActivation = true;
+            return;
+        }
         
         // Clear any existing timeout
         if (this.activationTimeout) {
@@ -764,9 +981,22 @@ export class ComputerTexture {
     dispose() {
         // Clean up all resources
         this.hide();
+        if (this.mouseInputController) {
+            this.mouseInputController.abort();
+            if (this.mouseContainer?.[MOUSE_INPUT_OWNER] === this.mouseInputController) {
+                delete this.mouseContainer[MOUSE_INPUT_OWNER];
+            }
+            this.mouseInputController = null;
+        }
         this.removeKeyboardHandlers();
         this.disposeTouchKeyboardProxy();
         this.disposeOpenSiteButton();
+        window.removeEventListener('message', this.iframeMessageHandler);
+        this.iframeScrollTarget?.removeEventListener('scroll', this.iframeScrollHandler);
+        this.iframeScrollTarget = null;
+        this.iframeResizeObserver?.disconnect();
+        this.iframeResizeObserver = null;
+        this.mouseScrollProxy = null;
         
         // Clear any intervals and timeouts
         if (this.previewInterval) {
