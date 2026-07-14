@@ -1,0 +1,14 @@
+# Nathan Perrier Portfolio
+
+Nathan Perrier's portfolio is an interactive Three.js room with an accessible standard portfolio and terminal alternative.
+
+## Pages
+
+- [Interactive 3D portfolio](https://nathanperrier.dev/): The primary experience, with projects, a terminal, and an arcade in a virtual room.
+- [Standard portfolio](https://nathanperrier.dev/portfolio/): A conventional, accessible summary of experience, skills, education, and projects.
+- [Terminal](https://nathanperrier.dev/terminal/): A command-line styled portfolio experience.
+
+## Contact
+
+- [GitHub](https://github.com/nathanperrier)
+- [LinkedIn](https://www.linkedin.com/in/nathan-perrier23/)

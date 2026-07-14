@@ -10,7 +10,7 @@ import { DRACOLoader } from 'three/examples/jsm/loaders/DRACOLoader.js';
 import { addLights } from './utils/lights.js';
 import { createControls } from './utils/controls.js';
 import { createTouchControls } from './utils/touchControls.js';
-import { initPhysics, createPlayerPhysics, createObjectPhysics, createDebugger } from './utils/physics.js';
+import { initPhysics, createPlayerPhysics, createObjectPhysics } from './utils/physics.js';
 import { createInteractionHandler } from './utils/interactive.js';
 import { createOutline } from './utils/outline.js';
 import { createLoadingManager } from './utils/loading.js';
@@ -28,10 +28,15 @@ import { ComputerTexture } from './utils/computerTexture.js';
 
 export function initScene() {
     let hudManager = null;
+    // A glTF mesh can contain several render primitives. Keep one logical
+    // interaction per named object rather than treating every primitive as a
+    // separate feature.
+    const interactiveObjects = [];
     const audioManager = getAudioManager();
     const sceneAPI = {
         setHudManager: (manager) => {
             hudManager = manager;
+            hudManager.setTotalInteractables(interactiveObjects.length);
         }
     };
     
@@ -64,9 +69,6 @@ export function initScene() {
         const world = initPhysics();
         updateLoadingText('Physics world created.');
 
-        const cannonDebugger = createDebugger(scene, world);
-        updateLoadingText('Physics debugger created.');
-
         addLights(scene);
         updateLoadingText('Lights added.');
 
@@ -86,8 +88,7 @@ export function initScene() {
                 antialias: quality.antialias,
                 alpha: true,
                 powerPreference: "high-performance",
-                failIfMajorPerformanceCaveat: false,
-                preserveDrawingBuffer: true
+                failIfMajorPerformanceCaveat: false
             });
         } catch (error) {
             console.error('Failed to create WebGL renderer with antialiasing:', error);
@@ -98,8 +99,7 @@ export function initScene() {
                     antialias: false,
                     alpha: true,
                     powerPreference: "high-performance",
-                    failIfMajorPerformanceCaveat: false,
-                    preserveDrawingBuffer: true
+                    failIfMajorPerformanceCaveat: false
                 });
             } catch (fallbackError) {
                 throw new Error('Failed to create WebGL context. Please ensure your browser supports WebGL and hardware acceleration is enabled.');
@@ -146,9 +146,13 @@ export function initScene() {
         updateLoadingText('Asset loader created.');
 
         // Load sound effects
-        audioManager.loadEffectSounds().then(() => {  
-            updateLoadingText('Sound effects loaded.');
-        });
+        audioManager.loadEffectSounds()
+            .then(() => {
+                updateLoadingText('Sound effects loaded.');
+            })
+            // loadAudioAsync() already reports the failure; avoid creating an
+            // additional unhandled rejection from this status update.
+            .catch(() => {});
 
         const playerBody = createPlayerPhysics(world);  
         updateLoadingText('Player physics body created.');
@@ -156,63 +160,143 @@ export function initScene() {
         updateLoadingText('This may take a moment...'); 
 
         let ambientParticles = null;
-        const interactiveObjects = [];
         const arcadeScreen = new ArcadeScreenTexture();
         const tvScreen = new TVGifTexture();
         const computerTerminalScreen = new ComputerTexture({ 
             src: import.meta.env.BASE_URL + 'terminal/index.html',
             enableKeyboard: true,
-            emissiveColor: 0x00ff00,
-            emissiveIntensity: 15
+            placeholderText: 'TERMINAL READY',
         });
         const computerWebsiteScreen = new ComputerTexture({
             src: import.meta.env.BASE_URL + 'portfolio/index.html',
             enableKeyboard: false,
             enableMouse: true,
-            emissiveColor: 0x00ff00,
-            emissiveIntensity: 15,
+            placeholderText: 'PROJECTS',
             screenWidth: 1.6,
             screenHeight: 1.5,
             screenPosition: { x: 0, y: 0.075, z: .9 },
         });
 
-        loadingManager.onLoad = () => {
-            updateLoadingText('All assets loaded.');
+        let assetsLoaded = false;
+        let roomInitialized = false;
+        let firstFrameRendered = false;
+        let initializationComplete = false;
 
+        const finishInitialization = () => {
+            if (
+                initializationComplete ||
+                !assetsLoaded ||
+                !roomInitialized ||
+                !firstFrameRendered
+            ) {
+                return;
+            }
+
+            initializationComplete = true;
+            updateLoadingText('Room ready.');
             loadingText.style.display = 'none';
             loadingScreen.style.display = 'none';
 
             if (hudManager) {
                 hudManager.setTotalInteractables(interactiveObjects.length);
             }
-            
-            // Start radio audio in background (non-blocking) - only for radio_interactive_2
+
+            // Start radio audio in the background (non-blocking).
             setTimeout(() => {
-                const allRadios = interactiveObjects.filter(obj => 
-                    obj.name.toLowerCase().includes('radio_interactive')
+                const radioObject = interactiveObjects.find(obj =>
+                    obj.userData.interactionId === 'radio_interactive'
                 );
-                
-                // Try radio_interactive_2 first, then radio_interactive_1 if not found
-                let radioObject = interactiveObjects.find(obj => 
-                    obj.name.toLowerCase().includes('radio_interactive_2')
-                );
-                
-                if (!radioObject) {
-                    radioObject = interactiveObjects.find(obj => 
-                        obj.name.toLowerCase().includes('radio_interactive_1')
-                    );
-                }
-                
                 if (radioObject) {
                     audioManager.createRadioAudio(radioObject);
-                } 
+                }
             }, 1000);
-            
+
             resolve(sceneAPI);
+        };
+
+        loadingManager.onLoad = () => {
+            // A LoadingManager reports fetch/decode completion, which can
+            // precede our scene traversal, collider construction and shader
+            // compilation. Keep the loading UI until the room has rendered.
+            assetsLoaded = true;
+            updateLoadingText('Assets decoded. Preparing the room...');
+            finishInitialization();
         };
 
         loader.load(import.meta.env.BASE_URL + 'assets/3d/room/room.ktx2.glb', function (gltf) {
           const model = gltf.scene;
+          const logicalInteractables = new Map();
+
+          const getInteractionId = (name = '') => {
+            const match = name.match(/^(.*_interactive)(?:_\d+)?$/i);
+            return match ? match[1] : null;
+          };
+
+          const getInteractionRoot = (node, interactionId) => {
+            let root = node;
+            let parent = node.parent;
+
+            // GLTFLoader wraps multi-primitive meshes in one or more groups
+            // with the original node name. Use the outermost matching group so
+            // every primitive resolves to the same logical object.
+            while (parent && getInteractionId(parent.name) === interactionId) {
+                root = parent;
+                parent = parent.parent;
+            }
+
+            return root;
+          };
+
+          const createInteractionOutlines = (object) => {
+            const meshes = [];
+            object.traverse((child) => {
+              if (child.isMesh && !child.userData.isInteractionOutline) {
+                meshes.push(child);
+              }
+            });
+
+            object.userData.outlines = meshes
+              .map((mesh) => createOutline(mesh))
+              .filter(Boolean);
+          };
+
+          const initializeInteraction = (interactionId, object) => {
+            object.userData.interactionId = interactionId;
+            object.traverse((child) => {
+              if (child.isMesh) {
+                child.userData.interactionRoot = object;
+              }
+            });
+
+            // Initialize each feature once per logical interactable.
+            if (interactionId === 'arcade_interactive') {
+              arcadeScreen.init(object);
+              object.userData.arcadeScreen = arcadeScreen;
+              updateLoadingText('Arcade screen initialized.');
+            }
+
+            if (interactionId === 'tv_interactive') {
+              tvScreen.init(object);
+              object.userData.tvScreen = tvScreen;
+              updateLoadingText('TV screen initialized.');
+            }
+
+            if (interactionId === 'computerTerminal_interactive') {
+              computerTerminalScreen.init(object);
+              object.userData.computerTerminalScreen = computerTerminalScreen;
+              updateLoadingText('Computer terminal screen initialized.');
+            }
+
+            if (interactionId === 'computerWebsite_interactive') {
+              computerWebsiteScreen.init(object);
+              object.userData.websiteScreen = computerWebsiteScreen;
+              updateLoadingText('Computer website screen initialized.');
+            }
+
+            createInteractionOutlines(object);
+            interactiveObjects.push(object);
+          };
+
           model.traverse(function (node) {
             if (node.isMesh) {
                 node.castShadow = quality.shadows;
@@ -229,46 +313,12 @@ export function initScene() {
 
                 createObjectPhysics(node, world);
             
-                if (node.name.includes('_interactive')) {
-                    interactiveObjects.push(node);
-                    
-                    createOutline(node);
-                    
-                    // Check if this is the radio object and attach positional audio
-                    if (node.name.toLowerCase().includes('radio_interactive_2')) {
-                        audioManager.createRadioAudio(node)
-                    }
-                    
-                    // Initialize arcade screen for arcade object
-                    if (node.name.toLowerCase().includes('arcade_interactive')) {
-                        arcadeScreen.init(node);
-                        node.userData.arcadeScreen = arcadeScreen;
-                        updateLoadingText('Arcade screen initialized.');
-                    }
-                    
-                    // Initialize TV screen for TV object
-                    if (node.name.toLowerCase().includes('tv_interactive')) {
-                        tvScreen.init(node);
-                        node.userData.tvScreen = tvScreen;
-                        updateLoadingText('TV screen initialized.');
-                    }
-                    
-                    // // Initialize computer terminal screen
-                    if (node.name.toLowerCase().includes('computerterminal_interactive')) {
-                        computerTerminalScreen.init(node);
-                        node.userData.computerTerminalScreen = computerTerminalScreen;
-                        updateLoadingText('Computer terminal screen initialized.');
-                        // Start in preview mode (10 second updates)
-                        computerTerminalScreen.show();
-                    }
-
-                    if (node.name.toLowerCase().includes('computerwebsite_interactive')) {
-                        computerWebsiteScreen.init(node);
-                        node.userData.websiteScreen = computerWebsiteScreen;
-                        updateLoadingText('Computer website screen initialized.');
-                        // Start in preview mode (10 second updates)
-                        computerWebsiteScreen.show();
-                    }
+                const interactionId = getInteractionId(node.name);
+                if (interactionId && !logicalInteractables.has(interactionId)) {
+                    logicalInteractables.set(
+                        interactionId,
+                        getInteractionRoot(node, interactionId)
+                    );
                 }
             }
             if (node.isLight) {
@@ -279,11 +329,32 @@ export function initScene() {
             }
           });
           scene.add(model);
+          logicalInteractables.forEach((object, interactionId) => {
+            initializeInteraction(interactionId, object);
+          });
           ambientParticles = createAmbientParticles(scene);
-          renderer.compile(scene, camera);
-          ktx2Loader.dispose(); // Free transcoder workers once textures are decoded
-          dracoLoader.dispose();
-          updateLoadingText('Room loaded.');
+
+          const finishRoomSetup = () => {
+            ktx2Loader.dispose(); // Free transcoder workers once textures are decoded
+            dracoLoader.dispose();
+            roomInitialized = true;
+            updateLoadingText('Room initialized. Rendering first frame...');
+            requestAnimationFrame(() => {
+              firstFrameRendered = true;
+              finishInitialization();
+            });
+          };
+
+          // compile() only queues shader compilation on browsers that support
+          // parallel compilation. Await it so visitors never see a blank room
+          // after the loading screen disappears.
+          updateLoadingText('Compiling room materials...');
+          renderer.compileAsync(scene, camera)
+            .then(finishRoomSetup)
+            .catch((compileError) => {
+              console.warn('Room material precompile failed; rendering normally.', compileError);
+              finishRoomSetup();
+            });
           
         }, undefined, function (error) {
           console.error(error);
@@ -412,9 +483,6 @@ export function initScene() {
             world.step(1 / 60, delta, 3); 
             updateControls(delta);
             
-
-            //* DEBUG FUNCTIONALITY
-            // cannonDebugger.update();
 
             interactionHandler.update();
             updateAmbientParticles(ambientParticles);

@@ -5,7 +5,12 @@ import './css/cursor.css';
 import './css/touch.css';
 
 import { initScene } from './three/scene.js';
-import { initCursor, frameImage } from './utils/cursor.js';
+import {
+    initCursor,
+    frameImage,
+    promoteCursorForDialog,
+    restoreCursorAfterDialog
+} from './utils/cursor.js';
 import { initNesUI } from './utils/welcomeDialog.js';
 import HudManager from './utils/hudManager.js';
 import { device } from './utils/device.js';
@@ -31,61 +36,88 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    setTimeout(async () => {
-        const timeoutDialog = document.getElementById('timeout-ui');
-        const uiContainer = document.getElementById('ui-container');
+    const timeoutUI = document.getElementById('timeout-ui');
+    const timeoutDialog = document.getElementById('timeout-dialog');
+    const refreshSceneButton = document.getElementById('refresh-scene-btn');
+    const loadingScreen = document.getElementById('loading-screen');
+    const uiContainer = document.getElementById('ui-container');
 
-        const timeoutDuration = 55000; // 55 seconds
-        const timeout = setTimeout(() => {    
-            timeoutDialog.style.display = 'flex';
-        }, timeoutDuration);
-        
+    const hideRecoveryDialog = () => {
+        if (timeoutDialog?.open && typeof timeoutDialog.close === 'function') {
+            timeoutDialog.close();
+        } else {
+            timeoutDialog?.removeAttribute('open');
+        }
+        restoreCursorAfterDialog(timeoutDialog);
+        if (timeoutUI) timeoutUI.style.display = 'none';
+    };
+
+    const showRecoveryDialog = () => {
+        // The loading layer otherwise sits above the recovery dialog.
+        if (loadingScreen) loadingScreen.style.display = 'none';
+        if (timeoutUI) timeoutUI.style.display = 'flex';
+
+        if (timeoutDialog && !timeoutDialog.open) {
+            if (typeof timeoutDialog.showModal === 'function') {
+                timeoutDialog.showModal();
+            } else {
+                timeoutDialog.setAttribute('open', '');
+            }
+        }
+        promoteCursorForDialog(timeoutDialog);
+    };
+
+    refreshSceneButton?.addEventListener('click', () => window.location.reload());
+    timeoutDialog?.addEventListener('close', () => {
+        restoreCursorAfterDialog(timeoutDialog);
+        if (timeoutUI) timeoutUI.style.display = 'none';
+    });
+
+    async function startExperience() {
+        const timeout = window.setTimeout(showRecoveryDialog, 55000);
+
         try {
-            uiContainer.style.transition = 'opacity 0.3s ease-in-out';
-            
+            if (uiContainer) {
+                uiContainer.style.transition = 'opacity 0.3s ease-in-out';
+            }
+
             const loadStartTime = Date.now();
             const scene = await initScene();
-            const loadEndTime = Date.now();
-            const loadTime = loadEndTime - loadStartTime;
-            
-            // Track scene load time
-            analytics.trackLoadTime(loadTime);
-            
-            const hudManager = new HudManager();
+            analytics.trackLoadTime(Date.now() - loadStartTime);
 
-            // Pass hudManager to scene so it can track interactions
-            if (scene && scene.setHudManager) {
-                scene.setHudManager(hudManager);
-            }
+            const hudManager = new HudManager();
+            scene?.setHudManager?.(hudManager);
             initNesUI();
 
-            clearTimeout(timeout);
+            window.clearTimeout(timeout);
+            hideRecoveryDialog();
         } catch (error) {
+            const message = error instanceof Error
+                ? error.message
+                : 'The scene failed to load. Please try refreshing.';
             console.error('Failed to initialize scene:', error);
-            analytics.trackError(error.message, 'scene_initialization');
-            clearTimeout(timeout);
-            
-            // Update timeout dialog with specific error message
-            const dialogTitle = timeoutDialog.querySelector('.title');
-            const dialogMessage = timeoutDialog.querySelector('p');
-            
-            if (error.message.includes('WebGL')) {
-                dialogTitle.textContent = 'WebGL Not Supported';
-                dialogMessage.innerHTML = 'WebGL is required to run this application.<br><br>' +
-                    'Please ensure:<br>' +
-                    '• Hardware acceleration is enabled in your browser<br>' +
-                    '• Your graphics drivers are up to date<br>' +
-                    '• Your browser supports WebGL (Chrome, Firefox, Edge recommended)<br><br>' +
-                    'Alternatively, you can visit the simplified portfolio site.';
+            analytics.trackError(message, 'scene_initialization');
+            window.clearTimeout(timeout);
+
+            const dialogTitle = document.getElementById('timeout-dialog-title');
+            const dialogMessage = document.getElementById('timeout-dialog-description');
+            if (message.includes('WebGL')) {
+                if (dialogTitle) dialogTitle.textContent = 'WebGL Not Supported';
+                if (dialogMessage) {
+                    dialogMessage.textContent = `WebGL is required to run this application.\n\nPlease ensure:\n• Hardware acceleration is enabled in your browser\n• Your graphics drivers are up to date\n• Your browser supports WebGL (Chrome, Firefox, or Edge recommended)\n\nYou can still browse the standard portfolio.`;
+                }
             } else {
-                dialogTitle.textContent = 'Error Loading Scene';
-                dialogMessage.innerHTML = (error.message || 'The scene failed to load. Please try refreshing.') +
-                    '<br><br>Alternatively, you can visit the simplified portfolio site.';
+                if (dialogTitle) dialogTitle.textContent = 'Error Loading Scene';
+                if (dialogMessage) {
+                    dialogMessage.textContent = `${message}\n\nYou can still browse the standard portfolio.`;
+                }
             }
-            
-            timeoutDialog.style.display = 'flex';
+
+            showRecoveryDialog();
         }
-    }, 1500);
+    }
+
+    startExperience();
 });
 
 // Track session time when user leaves

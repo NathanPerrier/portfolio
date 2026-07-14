@@ -18,13 +18,18 @@ export function createBasicCommands(fileSystem, state, utils) {
         return `ls: ${args[0] || '.'}: Not a directory`;
       }
       
-      const items = Object.keys(dir.contents).map(name => {
+      const output = document.createElement('div');
+      output.className = 'ls-output';
+
+      Object.keys(dir.contents).forEach(name => {
         const item = dir.contents[name];
-        const className = item.type === 'directory' ? 'directory' : 'file';
-        return `<span class="ls-item ${className}">${name}${item.type === 'directory' ? '/' : ''}</span>`;
+        const itemElement = document.createElement('span');
+        itemElement.className = `ls-item ${item.type === 'directory' ? 'directory' : 'file'}`;
+        itemElement.textContent = `${name}${item.type === 'directory' ? '/' : ''}`;
+        output.appendChild(itemElement);
       });
       
-      return `<div class="ls-output">${items.join('')}</div>`;
+      return output;
     },
     
     cat: (args) => {
@@ -75,7 +80,7 @@ export function createBasicCommands(fileSystem, state, utils) {
       } else if (args[0] === 'terminal') {
         // Clear terminal output
         const terminalOutput = document.getElementById('terminal-output');
-        terminalOutput.innerHTML = '';
+        terminalOutput.replaceChildren();
         return '';
       } else if (args[0] === 'history') {
         // Clear command history
@@ -106,21 +111,19 @@ export function createBasicCommands(fileSystem, state, utils) {
     },
     
     banner: () => {
-      return `<pre style="color: var(--terminal-text); line-height: 1.2; background-color: transparent; border: none; padding: 0;">
- ███╗   ██╗ █████╗ ████████╗██╗  ██╗ █████╗ ███╗   ██╗
- ████╗  ██║██╔══██╗╚══██╔══╝██║  ██║██╔══██╗████╗  ██║
- ██╔██╗ ██║███████║   ██║   ███████║███████║██╔██╗ ██║
- ██║╚██╗██║██╔══██║   ██║   ██╔══██║██╔══██║██║╚██╗██║
- ██║ ╚████║██║  ██║   ██║   ██║  ██║██║  ██║██║ ╚████║
- ╚═╝  ╚═══╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝
-                                                        
- ██████╗ ███████╗██████╗ ██████╗ ██╗███████╗██████╗    
- ██╔══██╗██╔════╝██╔══██╗██╔══██╗██║██╔════╝██╔══██╗   
- ██████╔╝█████╗  ██████╔╝██████╔╝██║█████╗  ██████╔╝   
- ██╔═══╝ ██╔══╝  ██╔══██╗██╔══██╗██║██╔══╝  ██╔══██╗   
- ██║     ███████╗██║  ██║██║  ██║██║███████╗██║  ██║   
- ╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝╚══════╝╚═╝  ╚═╝   
-</pre>`;
+      return `███╗   ██╗ █████╗ ████████╗██╗  ██╗ █████╗ ███╗   ██╗
+████╗  ██║██╔══██╗╚══██╔══╝██║  ██║██╔══██╗████╗  ██║
+██╔██╗ ██║███████║   ██║   ███████║███████║██╔██╗ ██║
+██║╚██╗██║██╔══██║   ██║   ██╔══██║██╔══██║██║╚██╗██║
+██║ ╚████║██║  ██║   ██║   ██║  ██║██║  ██║██║ ╚████║
+╚═╝  ╚═══╝╚═╝  ╚═╝   ╚═╝   ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝
+
+██████╗ ███████╗██████╗ ██████╗ ██╗███████╗██████╗
+██╔══██╗██╔════╝██╔══██╗██╔══██╗██║██╔════╝██╔══██╗
+██████╔╝█████╗  ██████╔╝██████╔╝██║█████╗  ██████╔╝
+██╔═══╝ ██╔══╝  ██╔══██╗██╔══██╗██║██╔══╝  ██╔══██╗
+██║     ███████╗██║  ██║██║  ██║██║███████╗██║  ██║
+╚═╝     ╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝`;
     },
     
     neofetch: () => {
@@ -131,20 +134,18 @@ export function createBasicCommands(fileSystem, state, utils) {
       const browserInfo = getBrowserInfo(userAgent);
       const uptime = Math.floor((Date.now() - performance.timing.navigationStart) / 1000);
       
-      return `<pre style="background-color: transparent; border: none; padding: 0;">
-              nathan@portfolio
-              ----------------
-              OS: ${platform}
-              Browser: ${browserInfo}
-              Resolution: ${screenRes}
-              Language: ${language}
-              Uptime: ${uptime}s
-              Terminal: v1.0.0
-              Theme: ${localStorage.getItem('terminalTheme') || 'matrix'}
-              
-              ████████████████
-              ████████████████
-</pre>`;
+      return `nathan@portfolio
+----------------
+OS: ${platform}
+Browser: ${browserInfo}
+Resolution: ${screenRes}
+Language: ${language}
+Uptime: ${uptime}s
+Terminal: v1.0.0
+Theme: ${localStorage.getItem('terminalTheme') || 'matrix'}
+
+████████████████
+████████████████`;
     }
   };
 }

@@ -4,6 +4,11 @@ import { whiteboardManager } from '../../utils/whiteboard.js';
 
 //adjust y for height
 
+function openExternalLink(url) {
+  const openedWindow = window.open(url, '_blank', 'noopener,noreferrer');
+  if (openedWindow) openedWindow.opener = null;
+}
+
 export const objectProperties = {
   'computerTerminal_interactive': {
     reposition: true,
@@ -66,14 +71,14 @@ export const objectProperties = {
     reposition: false,
     action: () => {
       analytics.trackExternalLink('GitHub', 'https://github.com/nathanperrier');
-      window.open('https://github.com/nathanperrier', '_blank');
+      openExternalLink('https://github.com/nathanperrier');
     },
   },
   'linkedin_interactive': {
     reposition: false,
     action: () => {
       analytics.trackExternalLink('LinkedIn', 'https://www.linkedin.com/in/nathan-perrier23/');
-      window.open('https://www.linkedin.com/in/nathan-perrier23/', '_blank');
+      openExternalLink('https://www.linkedin.com/in/nathan-perrier23/');
     },
   },
   'radio_interactive': {

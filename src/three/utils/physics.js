@@ -1,6 +1,5 @@
 import * as CANNON from 'cannon-es';
 import * as THREE from 'three';
-import CannonDebugger from 'cannon-es-debugger';
 import { quality } from '../../utils/quality.js';
 
 export function initPhysics() {
@@ -25,10 +24,13 @@ export function initPhysics() {
 }
 
 export function createPlayerPhysics(world) {
-    const playerShape = new CANNON.Cylinder(0.5, 0.5, 9, 16); // Increased height to 8
+    const playerHeight = 9;
+    const playerShape = new CANNON.Cylinder(0.5, 0.5, playerHeight, 16);
     const playerBody = new CANNON.Body({
         mass: 5,
-        position: new CANNON.Vec3(7.5, 9, 7.5), // Adjusted position for new height
+        // Start on the ground rather than letting the initial frame drop the
+        // camera through the ceiling-height of the room.
+        position: new CANNON.Vec3(7.5, playerHeight / 2 + 0.1, 7.5),
         shape: playerShape,
         fixedRotation: true,
         angularDamping: 1.0
@@ -39,7 +41,7 @@ export function createPlayerPhysics(world) {
 }
 
 export function createObjectPhysics(mesh, world) {
-    if (mesh.name.includes('Floor')) return;
+    if (!mesh.geometry || /floor/i.test(mesh.name)) return null;
 
     // Ensure the geometry has a bounding box.
     if (!mesh.geometry.boundingBox) {
@@ -53,7 +55,27 @@ export function createObjectPhysics(mesh, world) {
     // Apply the mesh's scale to the size.
     const worldScale = new THREE.Vector3();
     mesh.getWorldScale(worldScale);
-    size.multiply(worldScale);
+    size.multiply(worldScale).set(
+        Math.abs(size.x),
+        Math.abs(size.y),
+        Math.abs(size.z)
+    );
+
+    // Cannon boxes need strictly positive half-extents. Decorative planes and
+    // meshes with a collapsed scale cannot provide a useful collider anyway.
+    const minimumExtent = 0.001;
+    if (size.x <= minimumExtent || size.y <= minimumExtent || size.z <= minimumExtent) {
+        return null;
+    }
+
+    // Some exported room meshes are one large shell around the whole scene.
+    // Treating those as solid boxes traps (and can launch) the player inside
+    // them. The ground plane and the remaining architectural colliders cover
+    // normal movement, while aggregate meshes are intentionally ignored.
+    const maximumStaticColliderVolume = 500;
+    if (size.x * size.y * size.z > maximumStaticColliderVolume) {
+        return null;
+    }
 
     // Create the Cannon.js shape with the correct size.
     const halfExtents = new CANNON.Vec3(size.x / 2, size.y / 2, size.z / 2);
@@ -85,8 +107,4 @@ export function createObjectPhysics(mesh, world) {
 
     world.addBody(body);
     return body;
-}
-
-export function createDebugger(scene, world) {
-    return CannonDebugger(scene, world, {});
 }

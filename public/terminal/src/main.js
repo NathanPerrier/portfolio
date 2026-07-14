@@ -23,7 +23,11 @@ const terminalBody = document.getElementById('terminal-body');
 function addOutput(content, isError = false) {
   const outputDiv = document.createElement('div');
   outputDiv.className = isError ? 'command-output error-output' : 'command-output';
-  outputDiv.innerHTML = content;
+  if (content instanceof Node) {
+    outputDiv.appendChild(content);
+  } else {
+    outputDiv.textContent = String(content);
+  }
   terminalOutput.appendChild(outputDiv);
   terminalBody.scrollTop = terminalBody.scrollHeight;
 }
@@ -52,7 +56,10 @@ function processCommand(input) {
   
   // Display the command
   const commandLine = document.createElement('div');
-  commandLine.innerHTML = `<span class="terminal-prompt">nathan@portfolio:${state.currentDirectory}$ </span>${trimmedInput}`;
+  const prompt = document.createElement('span');
+  prompt.className = 'terminal-prompt';
+  prompt.textContent = `nathan@portfolio:${state.currentDirectory}$ `;
+  commandLine.append(prompt, document.createTextNode(trimmedInput));
   terminalOutput.appendChild(commandLine);
   
   // Parse command

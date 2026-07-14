@@ -1,4 +1,5 @@
 import { device } from './device.js';
+import { promoteCursorForDialog, restoreCursorAfterDialog } from './cursor.js';
 
 export function initNesUI() {
     const hudUI = document.getElementById('hud-ui');
@@ -7,8 +8,15 @@ export function initNesUI() {
     const nextButton = document.getElementById('dialog-next-btn');
     const closeButton = document.getElementById('dialog-close-btn');
     const dialogPages = document.querySelectorAll('.dialog-page');
+    const pageStatus = document.getElementById('dialog-page-status');
     const totalPages = dialogPages.length;
     let currentPage = 1;
+    let returnFocusElement = null;
+    let shouldRememberDialog = false;
+
+    if (!hudUI || !hudDialog || totalPages === 0) {
+        return;
+    }
 
     // Touch devices get joystick instructions instead of WASD
     if (device.isTouchPrimary) {
@@ -27,16 +35,21 @@ export function initNesUI() {
         return;
     }
 
-    hudUI.style.display = 'block';
-
     function showPage(pageNumber) {
-        dialogPages.forEach(page => {
-            page.classList.add('hidden');
+        dialogPages.forEach((page, index) => {
+            const isCurrentPage = index + 1 === pageNumber;
+            page.classList.toggle('hidden', !isCurrentPage);
+            page.hidden = !isCurrentPage;
+            page.setAttribute('aria-hidden', String(!isCurrentPage));
         });
 
         const page = document.getElementById(`dialog-page-${pageNumber}`);
         if (page) {
-            page.classList.remove('hidden');
+            hudDialog.setAttribute('aria-labelledby', `dialog-title-${pageNumber}`);
+            hudDialog.setAttribute('aria-describedby', `dialog-description-${pageNumber}`);
+        }
+        if (pageStatus) {
+            pageStatus.textContent = `Step ${pageNumber} of ${totalPages}`;
         }
         updateDialogButtons();
     }
@@ -64,18 +77,69 @@ export function initNesUI() {
     }
 
     function showDialog() {
-        hudUI.style.display = 'block';
+        returnFocusElement = document.activeElement instanceof HTMLElement &&
+            document.activeElement !== document.body
+            ? document.activeElement
+            : null;
+        hudUI.style.display = 'flex';
+
+        if (!hudDialog.open) {
+            if (typeof hudDialog.showModal === 'function') {
+                hudDialog.showModal();
+            } else {
+                hudDialog.setAttribute('open', '');
+            }
+        }
+        promoteCursorForDialog(hudDialog);
+
+        window.requestAnimationFrame(() => {
+            const focusTarget = currentPage < totalPages ? nextButton : closeButton;
+            focusTarget?.focus();
+        });
+    }
+
+    function finishDialog() {
+        restoreCursorAfterDialog(hudDialog);
+        hudUI.style.display = 'none';
+        if (shouldRememberDialog) {
+            localStorage.setItem('welcomeDialogSeen', 'true');
+        }
+
+        const fallbackFocusTarget = document.getElementById('bg');
+        const focusTarget = returnFocusElement?.isConnected
+            ? returnFocusElement
+            : fallbackFocusTarget;
+        focusTarget?.focus({ preventScroll: true });
+        returnFocusElement = null;
     }
 
     function closeDialog() {
-        hudUI.style.display = 'none';
-        hudDialog.close();
-        localStorage.setItem('welcomeDialogSeen', 'true');
+        shouldRememberDialog = true;
+        if (hudDialog.open && typeof hudDialog.close === 'function') {
+            hudDialog.close('close');
+        } else {
+            hudDialog.removeAttribute('open');
+            finishDialog();
+        }
     }
 
-    updateDialogButtons();
+    prevButton?.addEventListener('click', () => switchDialogPage('prev'));
+    nextButton?.addEventListener('click', () => switchDialogPage('next'));
+    closeButton?.addEventListener('click', (event) => {
+        shouldRememberDialog = true;
 
-    prevButton.addEventListener('click', () => switchDialogPage('prev'));
-    nextButton.addEventListener('click', () => switchDialogPage('next'));
-    closeButton.addEventListener('click', () => closeDialog());
+        // Native dialogs close through form[method="dialog"]. Retain a small
+        // fallback for browsers without dialog support.
+        if (typeof hudDialog.showModal !== 'function') {
+            event.preventDefault();
+            closeDialog();
+        }
+    });
+    hudDialog.addEventListener('cancel', () => {
+        shouldRememberDialog = true;
+    });
+    hudDialog.addEventListener('close', finishDialog);
+
+    showPage(currentPage);
+    showDialog();
 }
